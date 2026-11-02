@@ -17,9 +17,23 @@ import {
 } from '@/lib/supabase';
 
 export default function App() {
-  const [introDone, setIntroDone] = useState(true);
+  // Always start with false so Cinematic Intro runs on initial load
+  const [introDone, setIntroDone] = useState<boolean>(() => {
+    return sessionStorage.getItem('bunyad_intro_viewed') === 'true';
+  });
+
   const [active, setActive] = useState<NavId>('home');
   const [rates, setRates] = useState<MaterialRates>(DEFAULT_RATES);
+
+  function handleIntroComplete() {
+    sessionStorage.setItem('bunyad_intro_viewed', 'true');
+    setIntroDone(true);
+  }
+
+  function handleReplayIntro() {
+    sessionStorage.removeItem('bunyad_intro_viewed');
+    setIntroDone(false);
+  }
 
   const loadRates = useCallback(async () => {
     if (isSupabaseConfigured && supabase) {
@@ -30,7 +44,7 @@ export default function App() {
 
   useEffect(() => { loadRates(); }, [loadRates]);
 
-  // track scroll position to update active nav
+  // Track scroll position to update active navigation item
   useEffect(() => {
     const sections: NavId[] = ['home', 'directory', 'services', 'suite', 'lda-docs', 'master-maps', 'admin'];
     function onScroll() {
@@ -51,12 +65,12 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-obsidian" style={{ pointerEvents: 'auto' }}>
-      {!introDone && <CinematicIntro onComplete={() => setIntroDone(true)} />}
+    <div className="min-h-screen bg-obsidian text-platinum" style={{ pointerEvents: 'auto' }}>
+      {!introDone && <CinematicIntro onComplete={handleIntroComplete} />}
 
       <Ticker rates={rates} />
 
-      <HudShell onReplay={() => setIntroDone(false)} active={active} onNav={setActive}>
+      <HudShell onReplay={handleReplayIntro} active={active} onNav={setActive}>
         {/* Command Deck / Home */}
         <section id="home" className="scroll-mt-24">
           <Overview materialCount={4} onOpenAI={openAI} />
