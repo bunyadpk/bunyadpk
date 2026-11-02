@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import { motion } from '@/lib/motion';
-import { FileText, Download, ChevronRight, Gavel, Home } from 'lucide-react';
+import { FileText, Download, Gavel, Home } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 type LdaDoc = {

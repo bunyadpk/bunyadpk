@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from '@/lib/motion';
-import { Send, Loader2, CheckCircle2, Phone } from 'lucide-react';
+import { Loader2, CheckCircle2, Phone } from 'lucide-react';
 import { supabase, isSupabaseConfigured, type Lead } from '@/lib/supabase';
 import { SOCIETIES } from '@/data/societies';
 import { CEO_PHONE } from '@/lib/constants';

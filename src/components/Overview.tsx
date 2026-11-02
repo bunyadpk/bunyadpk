@@ -1,7 +1,7 @@
 import { motion } from '@/lib/motion';
 import { Building2, MapPin, Users, Hammer, ShieldCheck, Bot, Calculator, Briefcase } from 'lucide-react';
 import { SOCIETIES } from '@/data/societies';
-import { CEO_NAME, CEO_PHONE, HQ, waLink } from '@/lib/constants';
+import { CEO_NAME, CEO_PHONE, HQ } from '@/lib/constants';
 import type { NavId } from './HudShell';
 
 const HEADER_OFFSET = 90;

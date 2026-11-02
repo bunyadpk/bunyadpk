@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from '@/lib/motion';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { motion } from '@/lib/motion';
 import {
-  Shield, Lock, Phone, MessageCircle, Trash2, Plus, RefreshCw, Building2,
-  CircleDot, Clock, CheckCircle2, XCircle, Package,
+  Shield, Lock, MessageCircle, Trash2, Plus, RefreshCw, Building2,
+  CircleDot, Clock, CheckCircle2, Package, Download, Filter, X, Users, TrendingUp, MapPin, Search,
 } from 'lucide-react';
 import {
-  supabase, isSupabaseConfigured, type Lead, type Property, type MaterialRates, DEFAULT_RATES,
+  supabase, isSupabaseConfigured, type Lead, type Property, type MaterialRates,
 } from '@/lib/supabase';
-import { CEO_NAME, CEO_PHONE, waLink } from '@/lib/constants';
-import { MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
+import { CEO_NAME, waLink } from '@/lib/constants';
+import { MOCK_AGENTS, MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
 const ADMIN_PIN = '0321';
 
@@ -75,9 +75,64 @@ function AdminDashboard({ rates, onRatesChange }: { rates: MaterialRates; onRate
           </div>
         </div>
       </div>
+      <DashboardSummary />
       {panel === 'leads' && <LeadsPanel />}
       {panel === 'inventory' && <InventoryPanel />}
       {panel === 'rates' && <RatesPanel rates={rates} onRatesChange={onRatesChange} />}
+    </div>
+  );
+}
+
+function DashboardSummary() {
+  const statusCounts = MOCK_LEADS.reduce<Record<Lead['status'], number>>((counts, lead) => {
+    counts[lead.status] += 1;
+    return counts;
+  }, { New: 0, Contacted: 0, 'In-Progress': 0, Closed: 0 });
+  const maxStatusCount = Math.max(...Object.values(statusCounts), 1);
+  const metrics = [
+    { label: 'Total Leads', value: MOCK_LEADS.length, detail: 'Pipeline inquiries', icon: TrendingUp, tone: 'text-cyan' },
+    { label: 'Active Agents', value: MOCK_AGENTS.filter((agent) => agent.verified).length, detail: 'Verified partners', icon: Users, tone: 'text-green-400' },
+    { label: 'Available Plots', value: MOCK_PROPERTIES.filter((property) => property.status === 'Available').length, detail: 'Ready for matching', icon: MapPin, tone: 'text-yellow-400' },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="glass rounded-xl p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-wider text-cyan/60">{metric.label}</p>
+                <p className={`mt-1 font-display text-3xl font-black ${metric.tone}`}>{metric.value}</p>
+              </div>
+              <metric.icon className={`h-5 w-5 ${metric.tone}`} />
+            </div>
+            <p className="mt-2 text-[11px] text-platinum/50">{metric.detail}</p>
+          </div>
+        ))}
+      </div>
+      <div className="glass rounded-xl p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-display text-sm font-bold text-cyan">Lead Activity Overview</h3>
+            <p className="mt-0.5 text-[11px] text-platinum/50">Current sample pipeline distribution</p>
+          </div>
+          <span className="chip">{MOCK_LEADS.length} total</span>
+        </div>
+        <div className="mt-4 grid grid-cols-4 gap-3">
+          {(['New', 'Contacted', 'In-Progress', 'Closed'] as const).map((status) => (
+            <div key={status}>
+              <div className="flex items-end justify-between gap-1">
+                <span className="truncate text-[10px] text-platinum/60">{status}</span>
+                <span className="font-mono text-xs text-cyan">{statusCounts[status]}</span>
+              </div>
+              <div className="mt-1 h-16 rounded-md bg-obsidian/60 p-1">
+                <div className="h-full rounded bg-gradient-to-t from-cyan/30 to-cyan" style={{ height: `${Math.max((statusCounts[status] / maxStatusCount) * 100, 8)}%`, marginTop: `${100 - Math.max((statusCounts[status] / maxStatusCount) * 100, 8)}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -89,6 +144,9 @@ const STATUS_STYLES: Record<string, string> = {
 function LeadsPanel() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<'All' | Lead['status']>('All');
+  const [search, setSearch] = useState('');
+  const [showNewLead, setShowNewLead] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,12 +173,57 @@ function LeadsPanel() {
   }
 
   const STATUS_OPTS: Lead['status'][] = ['New', 'Contacted', 'In-Progress', 'Closed'];
+  const filteredLeads = useMemo(() => leads.filter((lead) => {
+    const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
+    const q = search.toLowerCase();
+    return matchesStatus && (!q || lead.full_name.toLowerCase().includes(q) || (lead.society_interest || '').toLowerCase().includes(q));
+  }), [leads, search, statusFilter]);
+
+  function exportLeads() {
+    const header = 'Name,Phone,Email,Society,Budget,Status,Created';
+    const rows = filteredLeads.map((lead) => [lead.full_name, lead.phone || '', lead.email || '', lead.society_interest || '', lead.budget || '', lead.status, lead.created_at || ''].map((value) => `"${value.split('"').join('""')}"`).join(','));
+    const blob = new Blob([[header, ...rows].join('\\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'bunyad-leads.csv';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function createLead(lead: Omit<Lead, 'id' | 'created_at'>) {
+    const localLead: Lead = { ...lead, id: crypto.randomUUID(), created_at: new Date().toISOString() };
+    if (isSupabaseConfigured && supabase) {
+      const { data } = await supabase.from('leads').insert(lead).select().single();
+      setLeads((prev) => [data ? data as Lead : localLead, ...prev]);
+    } else {
+      setLeads((prev) => [localLead, ...prev]);
+    }
+    setShowNewLead(false);
+  }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display text-sm font-bold text-cyan">Lead Pipeline</h3>
-        <button onClick={load} className="btn-ghost py-1 text-xs"><RefreshCw className="h-3 w-3" /> Refresh</button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-display text-sm font-bold text-cyan">Lead Pipeline ({filteredLeads.length})</h3>
+        <div className="flex flex-wrap gap-1.5">
+          <button onClick={() => setShowNewLead(true)} className="btn-cyan py-1 text-xs"><Plus className="h-3 w-3" /> New Lead</button>
+          <button onClick={exportLeads} className="btn-ghost py-1 text-xs"><Download className="h-3 w-3" /> Export CSV</button>
+          <button onClick={load} className="btn-ghost py-1 text-xs"><RefreshCw className="h-3 w-3" /> Refresh</button>
+        </div>
+      </div>
+      <div className="glass flex flex-col gap-2 rounded-xl p-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cyan/50" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name or society" className="w-full rounded-md border border-cyan/20 bg-obsidian/60 py-1.5 pl-8 pr-3 text-xs text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Filter className="h-3.5 w-3.5 text-cyan/60" />
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'All' | Lead['status'])} className="rounded-md border border-cyan/20 bg-obsidian/60 px-2 py-1.5 text-xs text-platinum focus:border-cyan focus:outline-none">
+            <option value="All">All statuses</option>
+            {STATUS_OPTS.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        </div>
       </div>
       {loading ? (
         <p className="text-center text-xs text-cyan/50">Loading leads...</p>
@@ -130,7 +233,7 @@ function LeadsPanel() {
         </div>
       ) : (
         <div className="space-y-2">
-          {leads.map((l) => (
+          {filteredLeads.map((l) => (
             <motion.div key={l.id} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
               className="glass rounded-lg p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
@@ -167,6 +270,34 @@ function LeadsPanel() {
           ))}
         </div>
       )}
+      {showNewLead && <NewLeadModal onClose={() => setShowNewLead(false)} onCreate={createLead} />}
+    </div>
+  );
+}
+
+function NewLeadModal({ onClose, onCreate }: { onClose: () => void; onCreate: (lead: Omit<Lead, 'id' | 'created_at'>) => Promise<void> }) {
+  const [form, setForm] = useState<Omit<Lead, 'id' | 'created_at'>>({ full_name: '', phone: '', email: '', society_interest: '', budget: '', message: '', status: 'New' });
+  const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const submit = () => { if (form.full_name && form.phone) void onCreate(form); };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-obsidian/80 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="glass-strong w-full max-w-lg rounded-2xl p-5" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div><h3 className="font-display text-base font-bold text-cyan">Create New Lead</h3><p className="mt-1 text-xs text-platinum/50">Add an inquiry directly to the pipeline.</p></div>
+          <button onClick={onClose} className="rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <input placeholder="Full name *" value={form.full_name} onChange={(event) => update('full_name', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
+          <input placeholder="Phone *" value={form.phone || ''} onChange={(event) => update('phone', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
+          <input placeholder="Email" value={form.email || ''} onChange={(event) => update('email', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
+          <input placeholder="Society interest" value={form.society_interest || ''} onChange={(event) => update('society_interest', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
+          <input placeholder="Budget" value={form.budget || ''} onChange={(event) => update('budget', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
+          <select value={form.status} onChange={(event) => update('status', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum focus:border-cyan focus:outline-none"><option>New</option><option>Contacted</option><option>In-Progress</option><option>Closed</option></select>
+        </div>
+        <textarea placeholder="Message" value={form.message || ''} onChange={(event) => update('message', event.target.value)} rows={3} className="mt-2 w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
+        <div className="mt-4 flex justify-end gap-2"><button onClick={onClose} className="btn-ghost">Cancel</button><button onClick={submit} className="btn-cyan"><Plus className="h-4 w-4" /> Create Lead</button></div>
+      </div>
     </div>
   );
 }

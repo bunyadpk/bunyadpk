@@ -14,20 +14,17 @@ type MotionProps = HTMLAttributes<HTMLElement> & {
   onAnimationComplete?: () => void;
 };
 
+const MOTION_KEYS = new Set([
+  'initial', 'animate', 'exit', 'whileInView', 'whileHover', 'transition',
+  'viewport', 'layout', 'onAnimationComplete',
+]);
+
 function createMotionElement(tag: keyof HTMLElementTagNameMap): ComponentType<MotionProps> {
-  return function MotionElement({
-    initial: _initial,
-    animate: _animate,
-    exit: _exit,
-    whileInView: _whileInView,
-    whileHover: _whileHover,
-    transition: _transition,
-    viewport: _viewport,
-    layout: _layout,
-    onAnimationComplete: _onAnimationComplete,
-    ...props
-  }: MotionProps) {
-    return createElement(tag, props);
+  return function MotionElement(props: MotionProps) {
+    const domProps = Object.fromEntries(
+      Object.entries(props).filter(([key]) => !MOTION_KEYS.has(key)),
+    );
+    return createElement(tag, domProps);
   };
 }
 

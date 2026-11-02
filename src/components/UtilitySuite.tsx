@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from '@/lib/motion';
 import {
-  Bot, Calculator, FileText, ShieldCheck, Download, MessageCircle, Ruler, Coins,
+  Bot, Calculator, FileText, ShieldCheck, Download, MessageCircle, Coins,
   Hammer, Loader2, Send,
 } from 'lucide-react';
 import { askBunyadAI, isGeminiConfigured } from '@/lib/gemini';
@@ -207,8 +207,6 @@ function CostEstimator({ rates }: { rates: MaterialRates }) {
 }
 
 const MILESTONES = ['Foundation', 'Structure', 'Finishing', 'Handover'] as const;
-type Milestone = typeof MILESTONES[number];
-
 function EscrowTracker() {
   const [current, setCurrent] = useState(0);
   const percent = ((current + 1) / MILESTONES.length) * 100;
