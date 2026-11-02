@@ -66,7 +66,7 @@ export default function HudShell({
             <div className="flex h-11 w-11 max-w-[44px] max-h-[44px] shrink-0 items-center justify-center rounded-xl border border-cyan-400/50 bg-[#060b13] p-1 shadow-cyan-glow">
               {!logoFailed ? (
                 <img
-                  src="./assets/images/bunyad.pk%20logo.jpg"
+                  src="./assets/images/bunyad-logo.png"
                   alt="BUNYAD logo"
                   className="h-full w-full rounded-lg object-cover"
                   onError={() => setLogoFailed(true)}
