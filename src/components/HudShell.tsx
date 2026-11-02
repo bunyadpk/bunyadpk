@@ -47,18 +47,26 @@ export default function HudShell({
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-obsidian text-platinum">
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0 grid-bg opacity-40 animate-grid-pan" />
-        <div className="absolute left-1/2 top-1/3 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-cyan/5 blur-[120px]" />
-        <div className="absolute right-10 top-10 h-72 w-72 rounded-full bg-cobalt/20 blur-[90px]" />
-        <motion.div className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan/10" animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}>
-          <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-cyan shadow-cyan-glow" />
-        </motion.div>
-        <motion.div className="absolute left-1/2 top-1/2 h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan/5" animate={{ rotate: -360 }} transition={{ duration: 46, repeat: Infinity, ease: 'linear' }}>
-          <span className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-cobalt" />
-        </motion.div>
-      </div>
+   <div className="flex h-11 w-11 max-w-[44px] max-h-[44px] shrink-0 items-center justify-center rounded-xl border border-cyan-400/50 bg-[#060b13] p-1 shadow-cyan-glow">
+              {!logoFailed ? (
+                <img
+                  src={`${import.meta.env.BASE_URL}assets/images/bunyad.pk%20logo.jpg`}
+                  alt="BUNYAD logo"
+                  className="h-full w-full rounded-lg object-cover"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    if (!img.dataset.triedAlt) {
+                      img.dataset.triedAlt = 'true';
+                      img.src = `${import.meta.env.BASE_URL}assets/images/bunyad.pk_logo.jpg`;
+                    } else {
+                      setLogoFailed(true);
+                    }
+                  }}
+                />
+              ) : (
+                <span className="font-display text-2xl font-black italic text-cyan neon-text">B</span>
+              )}
+            </div>
 
       <header className="sticky top-0 z-50 border-b border-cyan/20 bg-[#050b14]/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 py-2.5">
