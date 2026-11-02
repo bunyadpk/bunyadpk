@@ -10,7 +10,7 @@ import {
 import { CEO_NAME, waLink } from '@/lib/constants';
 import { MOCK_AGENTS, MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
-// CEO Master PIN (صرف آپ کے استعمال کے لیے)
+// CEO Master Key
 const ADMIN_PIN = '0321';
 
 type Panel = 'leads' | 'inventory' | 'rates';
@@ -24,6 +24,17 @@ export default function AdminPanel({
   const [pin, setPin] = useState('');
   const [err, setErr] = useState('');
 
+  function handleUnlock(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (pin.trim() === ADMIN_PIN) {
+      setAuthed(true);
+      setErr('');
+    } else {
+      setErr('Incorrect PIN. Please enter 0321');
+      setPin('');
+    }
+  }
+
   if (!authed) {
     return (
       <div className="mx-auto max-w-sm">
@@ -33,27 +44,28 @@ export default function AdminPanel({
           </div>
           <h2 className="font-display text-lg font-bold text-platinum">CEO Secure Access</h2>
           <p className="mt-1 text-xs text-platinum/60">Enter Master Key to access {CEO_NAME}'s command deck</p>
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                if (pin === ADMIN_PIN) { setAuthed(true); setErr(''); } else setErr('Incorrect PIN');
-              }
-            }}
-            placeholder="••••"
-            maxLength={4}
-            className="mt-4 w-full rounded-md border border-cyan/30 bg-obsidian/80 py-2.5 text-center font-mono text-xl tracking-[0.5em] text-cyan focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan"
-          />
-          {err && <p className="mt-2 text-xs font-mono text-red-400">{err}</p>}
-          <button
-            type="button"
-            onClick={() => { if (pin === ADMIN_PIN) { setAuthed(true); setErr(''); } else setErr('Incorrect PIN'); }}
-            className="btn-cyan mt-4 w-full font-bold shadow-cyan-glow"
-          >
-            Authenticate Terminal
-          </button>
+          
+          <form onSubmit={handleUnlock} className="mt-4">
+            <input
+              type="password"
+              autoFocus
+              value={pin}
+              onChange={(e) => {
+                setPin(e.target.value);
+                if (err) setErr('');
+              }}
+              placeholder="0321"
+              maxLength={8}
+              className="w-full rounded-md border border-cyan/30 bg-obsidian/80 py-2.5 text-center font-mono text-xl tracking-[0.4em] text-cyan focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan"
+            />
+            {err && <p className="mt-2 text-xs font-mono text-red-400">{err}</p>}
+            <button
+              type="submit"
+              className="btn-cyan mt-4 w-full cursor-pointer py-2.5 font-bold shadow-cyan-glow"
+            >
+              Authenticate Terminal
+            </button>
+          </form>
         </motion.div>
       </div>
     );
@@ -64,7 +76,7 @@ export default function AdminPanel({
       <div className="flex justify-end">
         <button
           onClick={() => { setAuthed(false); setPin(''); }}
-          className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-950/20 px-3 py-1.5 font-mono text-xs text-red-400 hover:border-red-400 hover:bg-red-900/30"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-950/20 px-3 py-1.5 font-mono text-xs text-red-400 hover:border-red-400 hover:bg-red-900/30"
         >
           <LogOut className="h-3.5 w-3.5" /> Lock Command Terminal
         </button>
@@ -227,9 +239,9 @@ function LeadsPanel() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-display text-sm font-bold text-cyan">Lead Pipeline ({filteredLeads.length})</h3>
         <div className="flex flex-wrap gap-1.5">
-          <button onClick={() => setShowNewLead(true)} className="btn-cyan py-1 text-xs"><Plus className="h-3 w-3" /> New Lead</button>
-          <button onClick={exportLeads} className="btn-ghost py-1 text-xs"><Download className="h-3 w-3" /> Export CSV</button>
-          <button onClick={load} className="btn-ghost py-1 text-xs"><RefreshCw className="h-3 w-3" /> Refresh</button>
+          <button onClick={() => setShowNewLead(true)} className="btn-cyan cursor-pointer py-1 text-xs"><Plus className="h-3 w-3" /> New Lead</button>
+          <button onClick={exportLeads} className="btn-ghost cursor-pointer py-1 text-xs"><Download className="h-3 w-3" /> Export CSV</button>
+          <button onClick={load} className="btn-ghost cursor-pointer py-1 text-xs"><RefreshCw className="h-3 w-3" /> Refresh</button>
         </div>
       </div>
       <div className="glass flex flex-col gap-2 rounded-xl p-3 sm:flex-row">
@@ -271,7 +283,7 @@ function LeadsPanel() {
                       <MessageCircle className="h-4 w-4" />
                     </a>
                   )}
-                  <button onClick={(e) => { e.stopPropagation(); remove(l.id); }} className="rounded p-1.5 text-red-400 hover:bg-red-400/10" title="Delete">
+                  <button onClick={(e) => { e.stopPropagation(); remove(l.id); }} className="cursor-pointer rounded p-1.5 text-red-400 hover:bg-red-400/10" title="Delete">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -279,7 +291,7 @@ function LeadsPanel() {
               <div className="mt-2 flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
                 {STATUS_OPTS.map((s) => (
                   <button key={s} onClick={() => updateStatus(l.id, s)}
-                    className={`rounded px-2 py-0.5 text-[10px] font-mono uppercase transition ${
+                    className={`cursor-pointer rounded px-2 py-0.5 text-[10px] font-mono uppercase transition ${
                       l.status === s ? `bg-cyan/20 ${STATUS_STYLES[s]}` : 'text-platinum/40 hover:text-cyan'
                     }`}>
                     {s}
@@ -303,7 +315,7 @@ function LeadDetailDrawer({ lead, onClose, onStatusChange }: { lead: Lead; onClo
       <aside className="absolute right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-cyan/25 bg-[#07111d] p-5 shadow-2xl shadow-cyan/10" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-3 border-b border-cyan/15 pb-4">
           <div><p className="font-mono text-[10px] uppercase tracking-wider text-cyan/60">Lead detail</p><h3 className="mt-1 font-display text-xl font-bold text-platinum">{lead.full_name}</h3></div>
-          <button onClick={onClose} className="rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close lead details"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="cursor-pointer rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close lead details"><X className="h-5 w-5" /></button>
         </div>
         <div className="mt-5 space-y-3">
           {[['Phone', lead.phone || 'Not provided'], ['Email', lead.email || 'Not provided'], ['Society', lead.society_interest || 'Not selected'], ['Budget', lead.budget || 'Not provided'], ['Received', lead.created_at ? new Date(lead.created_at).toLocaleString() : 'Recently']].map(([label, value]) => (
@@ -311,7 +323,7 @@ function LeadDetailDrawer({ lead, onClose, onStatusChange }: { lead: Lead; onClo
           ))}
           <div className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3"><p className="font-mono text-[10px] uppercase text-cyan/60">Message</p><p className="mt-1 text-sm leading-6 text-platinum/80">{lead.message || 'No message was added.'}</p></div>
         </div>
-        <div className="mt-5"><p className="font-mono text-[10px] uppercase text-cyan/60">Update status</p><div className="mt-2 grid grid-cols-2 gap-2">{statuses.map((status) => <button key={status} onClick={() => onStatusChange(status)} className={`rounded-md border px-3 py-2 text-xs transition ${lead.status === status ? 'border-cyan bg-cyan/15 text-cyan' : 'border-cyan/15 text-platinum/60 hover:border-cyan/40 hover:text-cyan'}`}>{status}</button>)}</div></div>
+        <div className="mt-5"><p className="font-mono text-[10px] uppercase text-cyan/60">Update status</p><div className="mt-2 grid grid-cols-2 gap-2">{statuses.map((status) => <button key={status} onClick={() => onStatusChange(status)} className={`cursor-pointer rounded-md border px-3 py-2 text-xs transition ${lead.status === status ? 'border-cyan bg-cyan/15 text-cyan' : 'border-cyan/15 text-platinum/60 hover:border-cyan/40 hover:text-cyan'}`}>{status}</button>)}</div></div>
         {lead.phone && <a href={waLink(`Asalam o Alaikum ${lead.full_name}, regarding your Bunyad inquiry`, lead.phone)} target="_blank" rel="noopener noreferrer" className="btn-cyan mt-5 w-full"><MessageCircle className="h-4 w-4" /> Contact on WhatsApp</a>}
       </aside>
     </div>
@@ -328,7 +340,7 @@ function NewLeadModal({ onClose, onCreate }: { onClose: () => void; onCreate: (l
       <div className="glass-strong w-full max-w-lg rounded-2xl p-5" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div><h3 className="font-display text-base font-bold text-cyan">Create New Lead</h3><p className="mt-1 text-xs text-platinum/50">Add an inquiry directly to the pipeline.</p></div>
-          <button onClick={onClose} className="rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="cursor-pointer rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close"><X className="h-5 w-5" /></button>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <input placeholder="Full name *" value={form.full_name} onChange={(event) => update('full_name', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
@@ -339,7 +351,7 @@ function NewLeadModal({ onClose, onCreate }: { onClose: () => void; onCreate: (l
           <select value={form.status} onChange={(event) => update('status', event.target.value)} className="rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum focus:border-cyan focus:outline-none"><option>New</option><option>Contacted</option><option>In-Progress</option><option>Closed</option></select>
         </div>
         <textarea placeholder="Message" value={form.message || ''} onChange={(event) => update('message', event.target.value)} rows={3} className="mt-2 w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" />
-        <div className="mt-4 flex justify-end gap-2"><button onClick={onClose} className="btn-ghost">Cancel</button><button onClick={submit} className="btn-cyan"><Plus className="h-4 w-4" /> Create Lead</button></div>
+        <div className="mt-4 flex justify-end gap-2"><button onClick={onClose} className="btn-ghost cursor-pointer">Cancel</button><button onClick={submit} className="btn-cyan cursor-pointer"><Plus className="h-4 w-4" /> Create Lead</button></div>
       </div>
     </div>
   );
@@ -417,7 +429,7 @@ function InventoryPanel() {
           <input placeholder="Block" value={form.block} onChange={(e) => setForm({ ...form, block: e.target.value })} className="rounded border border-cyan/20 bg-obsidian/60 px-2 py-1.5 text-xs text-platinum focus:border-cyan focus:outline-none" />
           <div className="flex gap-1">
             <input placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="flex-1 rounded border border-cyan/20 bg-obsidian/60 px-2 py-1.5 text-xs text-platinum focus:border-cyan focus:outline-none" />
-            <button onClick={add} className="rounded bg-cyan/90 px-2.5 text-obsidian hover:bg-cyan"><Plus className="h-4 w-4" /></button>
+            <button onClick={add} className="cursor-pointer rounded bg-cyan/90 px-2.5 text-obsidian hover:bg-cyan"><Plus className="h-4 w-4" /></button>
           </div>
         </div>
       </div>
@@ -440,8 +452,8 @@ function InventoryPanel() {
                     <p className="font-mono text-[11px] text-cyan/60">{p.society_name} · {p.plot_size || '—'} {p.block ? `· Block ${p.block}` : ''} · {p.price || '—'}</p>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    {p.status === 'Available' && <button onClick={() => setReservationProperty(p)} className="rounded border border-cyan/30 px-2 py-1 text-[10px] font-medium text-cyan transition hover:bg-cyan/10">Reserve</button>}
-                    <button onClick={() => cycle(p.id)} className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
+                    {p.status === 'Available' && <button onClick={() => setReservationProperty(p)} className="cursor-pointer rounded border border-cyan/30 px-2 py-1 text-[10px] font-medium text-cyan transition hover:bg-cyan/10">Reserve</button>}
+                    <button onClick={() => cycle(p.id)} className={`flex cursor-pointer items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
                     p.status === 'Available' ? 'bg-cyan/20 text-cyan' : p.status === 'Reserved' ? 'bg-yellow-400/15 text-yellow-400' : 'bg-green-400/15 text-green-400'
                   }`}>
                       <Icon className="h-3.5 w-3.5" /> {p.status}
@@ -465,9 +477,9 @@ function ReservationModal({ property, onClose, onReserve }: { property: Property
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-obsidian/80 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="glass-strong w-full max-w-md rounded-2xl p-5" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-start justify-between gap-3"><div><p className="font-mono text-[10px] uppercase text-cyan/60">Plot reservation</p><h3 className="mt-1 font-display text-lg font-bold text-platinum">{property.title}</h3><p className="mt-1 text-xs text-platinum/60">{property.society_name} · {property.plot_size} · {property.price}</p></div><button onClick={onClose} className="rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close reservation"><X className="h-5 w-5" /></button></div>
+        <div className="flex items-start justify-between gap-3"><div><p className="font-mono text-[10px] uppercase text-cyan/60">Plot reservation</p><h3 className="mt-1 font-display text-lg font-bold text-platinum">{property.title}</h3><p className="mt-1 text-xs text-platinum/60">{property.society_name} · {property.plot_size} · {property.price}</p></div><button onClick={onClose} className="cursor-pointer rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close reservation"><X className="h-5 w-5" /></button></div>
         <div className="mt-4 space-y-2"><input placeholder="Full name *" value={form.full_name} onChange={(event) => setForm({ ...form, full_name: event.target.value })} className="w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" /><input placeholder="Phone / WhatsApp *" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" /><textarea placeholder="Notes or preferred callback time" value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} rows={3} className="w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" /></div>
-        <div className="mt-4 flex justify-end gap-2"><button onClick={onClose} className="btn-ghost">Cancel</button><button onClick={submit} className="btn-cyan"><CheckCircle2 className="h-4 w-4" /> Submit Reservation</button></div>
+        <div className="mt-4 flex justify-end gap-2"><button onClick={onClose} className="btn-ghost cursor-pointer">Cancel</button><button onClick={submit} className="btn-cyan cursor-pointer"><CheckCircle2 className="h-4 w-4" /> Submit Reservation</button></div>
       </div>
     </div>
   );
@@ -506,18 +518,4 @@ function RatesPanel({ rates, onRatesChange }: { rates: MaterialRates; onRatesCha
             <label key={f.key} className="block">
               <span className="font-mono text-[10px] uppercase text-cyan/60">{f.label}</span>
               <input type="number" value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: Number(e.target.value) })}
-                className="mt-1 w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum focus:border-cyan focus:outline-none" />
-            </label>
-          ))}
-        </div>
-        <button onClick={save} disabled={saving} className="btn-cyan mt-4">
-          {saving ? 'Saving...' : saved ? 'Saved!' : 'Update Rates'} {!saving && !saved && <RefreshCw className="h-4 w-4" />}
-          {saved && <CheckCircle2 className="h-4 w-4" />}
-        </button>
-        {!isSupabaseConfigured && (
-          <p className="mt-2 font-mono text-[10px] text-yellow-400/70">Local mode — rates persist in this session only.</p>
-        )}
-      </div>
-    </div>
-  );
-}
+                className="mt-1 w-full rounded-md border border-cyan/20 bg
