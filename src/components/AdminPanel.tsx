@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from '@/lib/motion';
 import {
   Shield, Lock, MessageCircle, Trash2, Plus, RefreshCw, Building2,
-  CircleDot, Clock, CheckCircle2, Package, Download, Filter, X, Users, TrendingUp, MapPin, Search,
+  CircleDot, Clock, CheckCircle2, Package, Download, Filter, X, Users, TrendingUp, MapPin, Search
 } from 'lucide-react';
 import {
   supabase, isSupabaseConfigured, type Lead, type Property, type MaterialRates,
@@ -517,4 +517,4 @@ function RatesPanel({ rates, onRatesChange }: { rates: MaterialRates; onRatesCha
           {fields.map((f) => (
             <label key={f.key} className="block">
               <span className="font-mono text-[10px] uppercase text-cyan/60">{f.label}</span>
-              <input
+              <input type="number" value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: Number(e.target.value)
