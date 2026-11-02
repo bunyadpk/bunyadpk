@@ -11,7 +11,7 @@ import { CEO_NAME, waLink } from '@/lib/constants';
 import { MOCK_AGENTS, MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
 // CEO Master PIN (صرف آپ کے استعمال کے لیے)
-const ADMIN_PIN = 'tazataza12A1';
+const ADMIN_PIN = '0321';
 
 type Panel = 'leads' | 'inventory' | 'rates';
 
