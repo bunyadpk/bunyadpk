@@ -10,7 +10,6 @@ import {
 import { CEO_NAME, waLink } from '@/lib/constants';
 import { MOCK_AGENTS, MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
-// CEO Master PIN
 const ADMIN_PIN = '0321';
 
 type Panel = 'leads' | 'inventory' | 'rates';
@@ -517,4 +516,19 @@ function RatesPanel({ rates, onRatesChange }: { rates: MaterialRates; onRatesCha
           {fields.map((f) => (
             <label key={f.key} className="block">
               <span className="font-mono text-[10px] uppercase text-cyan/60">{f.label}</span>
-              <input type="number" value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: Number(e.target.value)
+              <input type="number" value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: Number(e.target.value) })}
+                className="mt-1 w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum focus:border-cyan focus:outline-none" />
+            </label>
+          ))}
+        </div>
+        <button onClick={save} disabled={saving} className="btn-cyan mt-4 cursor-pointer">
+          {saving ? 'Saving...' : saved ? 'Saved!' : 'Update Rates'} {!saving && !saved && <RefreshCw className="h-4 w-4" />}
+          {saved && <CheckCircle2 className="h-4 w-4" />}
+        </button>
+        {!isSupabaseConfigured && (
+          <p className="mt-2 font-mono text-[10px] text-yellow-400/70">Local mode — rates persist in this session only.</p>
+        )}
+      </div>
+    </div>
+  );
+}
