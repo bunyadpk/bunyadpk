@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from '@/lib/motion';
 import {
   Shield, Lock, MessageCircle, Trash2, Plus, RefreshCw, Building2,
-  CircleDot, Clock, CheckCircle2, Package, Download, Filter, X, Users, TrendingUp, MapPin, Search,
+  CircleDot, Clock, CheckCircle2, Package, Download, Filter, X, Users, TrendingUp, MapPin, Search, LogOut,
 } from 'lucide-react';
 import {
   supabase, isSupabaseConfigured, type Lead, type Property, type MaterialRates,
@@ -10,7 +10,8 @@ import {
 import { CEO_NAME, waLink } from '@/lib/constants';
 import { MOCK_AGENTS, MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
-const ADMIN_PIN = '0321';
+// CEO Master PIN (صرف آپ کے استعمال کے لیے)
+const ADMIN_PIN = 'tazataza12A1';
 
 type Panel = 'leads' | 'inventory' | 'rates';
 
@@ -26,33 +27,51 @@ export default function AdminPanel({
   if (!authed) {
     return (
       <div className="mx-auto max-w-sm">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass-strong rounded-2xl p-6 text-center">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="glass-strong rounded-2xl p-6 text-center shadow-cyan-glow">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-cyan/10 text-cyan">
-            <Lock className="h-6 w-6" />
+            <Lock className="h-6 w-6 animate-pulse" />
           </div>
           <h2 className="font-display text-lg font-bold text-platinum">CEO Secure Access</h2>
-          <p className="mt-1 text-xs text-platinum/60">Enter PIN to access {CEO_NAME}'s command center</p>
+          <p className="mt-1 text-xs text-platinum/60">Enter Master Key to access {CEO_NAME}'s command deck</p>
           <input
-            type="password" value={pin} onChange={(e) => setPin(e.target.value)} onKeyDown={(e) => {
+            type="password"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 if (pin === ADMIN_PIN) { setAuthed(true); setErr(''); } else setErr('Incorrect PIN');
               }
             }}
-            placeholder="••••" maxLength={4}
-            className="mt-4 w-full rounded-md border border-cyan/20 bg-obsidian/60 py-2 text-center font-mono text-lg tracking-[0.5em] text-cyan focus:border-cyan focus:outline-none"
+            placeholder="••••"
+            maxLength={4}
+            className="mt-4 w-full rounded-md border border-cyan/30 bg-obsidian/80 py-2.5 text-center font-mono text-xl tracking-[0.5em] text-cyan focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan"
           />
-          {err && <p className="mt-2 text-xs text-red-400">{err}</p>}
+          {err && <p className="mt-2 text-xs font-mono text-red-400">{err}</p>}
           <button
+            type="button"
             onClick={() => { if (pin === ADMIN_PIN) { setAuthed(true); setErr(''); } else setErr('Incorrect PIN'); }}
-            className="btn-cyan mt-4 w-full"
-          >Unlock</button>
-          <p className="mt-3 font-mono text-[10px] text-cyan/40">Demo PIN: 0321 · Production: CEO-managed</p>
+            className="btn-cyan mt-4 w-full font-bold shadow-cyan-glow"
+          >
+            Authenticate Terminal
+          </button>
         </motion.div>
       </div>
     );
   }
 
-  return <AdminDashboard rates={rates} onRatesChange={onRatesChange} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <button
+          onClick={() => { setAuthed(false); setPin(''); }}
+          className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-950/20 px-3 py-1.5 font-mono text-xs text-red-400 hover:border-red-400 hover:bg-red-900/30"
+        >
+          <LogOut className="h-3.5 w-3.5" /> Lock Command Terminal
+        </button>
+      </div>
+      <AdminDashboard rates={rates} onRatesChange={onRatesChange} />
+    </div>
+  );
 }
 
 function AdminDashboard({ rates, onRatesChange }: { rates: MaterialRates; onRatesChange: (r: MaterialRates) => void }) {
@@ -183,7 +202,7 @@ function LeadsPanel() {
   function exportLeads() {
     const header = 'Name,Phone,Email,Society,Budget,Status,Created';
     const rows = filteredLeads.map((lead) => [lead.full_name, lead.phone || '', lead.email || '', lead.society_interest || '', lead.budget || '', lead.status, lead.created_at || ''].map((value) => `"${value.split('"').join('""')}"`).join(','));
-    const blob = new Blob([[header, ...rows].join('\\n')], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -252,12 +271,12 @@ function LeadsPanel() {
                       <MessageCircle className="h-4 w-4" />
                     </a>
                   )}
-                  <button onClick={() => remove(l.id)} className="rounded p-1.5 text-red-400 hover:bg-red-400/10" title="Delete">
+                  <button onClick={(e) => { e.stopPropagation(); remove(l.id); }} className="rounded p-1.5 text-red-400 hover:bg-red-400/10" title="Delete">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
-              <div className="mt-2 flex flex-wrap gap-1">
+              <div className="mt-2 flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
                 {STATUS_OPTS.map((s) => (
                   <button key={s} onClick={() => updateStatus(l.id, s)}
                     className={`rounded px-2 py-0.5 text-[10px] font-mono uppercase transition ${
@@ -390,7 +409,6 @@ function InventoryPanel() {
   return (
     <div className="space-y-3">
       <h3 className="font-display text-sm font-bold text-cyan">Plot Inventory</h3>
-      {/* add form */}
       <div className="glass rounded-lg p-3">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="rounded border border-cyan/20 bg-obsidian/60 px-2 py-1.5 text-xs text-platinum focus:border-cyan focus:outline-none" />
