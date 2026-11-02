@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from '@/lib/motion';
 import {
   Shield, Lock, MessageCircle, Trash2, Plus, RefreshCw, Building2,
-  CircleDot, Clock, CheckCircle2, Package, Download, Filter, X, Users, TrendingUp, MapPin, Search, LogOut,
+  CircleDot, Clock, CheckCircle2, Package, Download, Filter, X, Users, TrendingUp, MapPin, Search,
 } from 'lucide-react';
 import {
   supabase, isSupabaseConfigured, type Lead, type Property, type MaterialRates,
@@ -10,7 +10,7 @@ import {
 import { CEO_NAME, waLink } from '@/lib/constants';
 import { MOCK_AGENTS, MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
-// CEO Master Key
+// CEO Master PIN
 const ADMIN_PIN = '0321';
 
 type Panel = 'leads' | 'inventory' | 'rates';
@@ -44,7 +44,7 @@ export default function AdminPanel({
           </div>
           <h2 className="font-display text-lg font-bold text-platinum">CEO Secure Access</h2>
           <p className="mt-1 text-xs text-platinum/60">Enter Master Key to access {CEO_NAME}'s command deck</p>
-          
+
           <form onSubmit={handleUnlock} className="mt-4">
             <input
               type="password"
@@ -78,7 +78,7 @@ export default function AdminPanel({
           onClick={() => { setAuthed(false); setPin(''); }}
           className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-950/20 px-3 py-1.5 font-mono text-xs text-red-400 hover:border-red-400 hover:bg-red-900/30"
         >
-          <LogOut className="h-3.5 w-3.5" /> Lock Command Terminal
+          <Lock className="h-3.5 w-3.5" /> Lock Terminal
         </button>
       </div>
       <AdminDashboard rates={rates} onRatesChange={onRatesChange} />
@@ -517,5 +517,4 @@ function RatesPanel({ rates, onRatesChange }: { rates: MaterialRates; onRatesCha
           {fields.map((f) => (
             <label key={f.key} className="block">
               <span className="font-mono text-[10px] uppercase text-cyan/60">{f.label}</span>
-              <input type="number" value={form[f.key]} onChange={(e) => setForm({ ...form, [f.key]: Number(e.target.value) })}
-                className="mt-1 w-full rounded-md border border-cyan/20 bg
+              <input
