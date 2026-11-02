@@ -17,21 +17,16 @@ import {
 } from '@/lib/supabase';
 
 export default function App() {
-  // Always start with false so Cinematic Intro runs on initial load
-  const [introDone, setIntroDone] = useState<boolean>(() => {
-    return sessionStorage.getItem('bunyad_intro_viewed') === 'true';
-  });
-
+  // Directly false: har dafa website khulne par intro chalegi
+  const [introDone, setIntroDone] = useState(false);
   const [active, setActive] = useState<NavId>('home');
   const [rates, setRates] = useState<MaterialRates>(DEFAULT_RATES);
 
   function handleIntroComplete() {
-    sessionStorage.setItem('bunyad_intro_viewed', 'true');
     setIntroDone(true);
   }
 
   function handleReplayIntro() {
-    sessionStorage.removeItem('bunyad_intro_viewed');
     setIntroDone(false);
   }
 
