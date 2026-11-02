@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from '@/lib/motion';
 import { Briefcase, BadgeCheck, RefreshCw, Phone, User, Building2, IdCard, Percent } from 'lucide-react';
 import { supabase, isSupabaseConfigured, type Agent } from '@/lib/supabase';
+import { MOCK_AGENTS } from '@/data/mockDashboard';
 
 export default function AgentPortal() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -13,7 +14,9 @@ export default function AgentPortal() {
     setLoading(true);
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase.from('agents').select('*').order('created_at', { ascending: false });
-      if (data) setAgents(data as Agent[]);
+      setAgents(data && data.length > 0 ? data as Agent[] : MOCK_AGENTS);
+    } else {
+      setAgents(MOCK_AGENTS);
     }
     setLoading(false);
   }, []);

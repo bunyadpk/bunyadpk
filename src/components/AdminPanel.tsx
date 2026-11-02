@@ -8,6 +8,7 @@ import {
   supabase, isSupabaseConfigured, type Lead, type Property, type MaterialRates, DEFAULT_RATES,
 } from '@/lib/supabase';
 import { CEO_NAME, CEO_PHONE, waLink } from '@/lib/constants';
+import { MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
 const ADMIN_PIN = '0321';
 
@@ -93,9 +94,9 @@ function LeadsPanel() {
     setLoading(true);
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
-      if (!error && data) { setLeads(data as Lead[]); setLoading(false); return; }
+      if (!error && data && data.length > 0) { setLeads(data as Lead[]); setLoading(false); return; }
     }
-    setLeads([]);
+    setLeads(MOCK_LEADS);
     setLoading(false);
   }, []);
 
@@ -179,7 +180,9 @@ function InventoryPanel() {
     setLoading(true);
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase.from('properties').select('*').order('created_at', { ascending: false });
-      if (data) setItems(data as Property[]);
+      setItems(data && data.length > 0 ? data as Property[] : MOCK_PROPERTIES);
+    } else {
+      setItems(MOCK_PROPERTIES);
     }
     setLoading(false);
   }, []);
