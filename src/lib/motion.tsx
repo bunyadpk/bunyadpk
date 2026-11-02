@@ -10,6 +10,8 @@ type MotionProps = HTMLAttributes<HTMLElement> & {
   transition?: unknown;
   viewport?: unknown;
   layout?: unknown;
+  type?: string;
+  onAnimationComplete?: () => void;
 };
 
 function createMotionElement(tag: keyof HTMLElementTagNameMap): ComponentType<MotionProps> {
@@ -22,6 +24,7 @@ function createMotionElement(tag: keyof HTMLElementTagNameMap): ComponentType<Mo
     transition: _transition,
     viewport: _viewport,
     layout: _layout,
+    onAnimationComplete: _onAnimationComplete,
     ...props
   }: MotionProps) {
     return createElement(tag, props);

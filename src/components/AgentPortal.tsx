@@ -21,7 +21,7 @@ export default function AgentPortal() {
 
   async function register() {
     if (!form.agent_name || !form.phone) return;
-    const row: Omit<Agent, 'id' | 'created_at' | 'verified'> = { ...form, verified: false };
+    const row: Omit<Agent, 'id' | 'created_at'> = { ...form, verified: false };
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase.from('agents').insert({ ...row, verified: false }).select().single();
       if (data) setAgents((prev) => [data as Agent, ...prev]);

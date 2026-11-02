@@ -15,7 +15,7 @@ function resolvePkg(name: string): string {
 }
 
 export default defineConfig({
-  base: '/',
+  base: process.env.GITHUB_ACTIONS ? '/bunyadpk/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
