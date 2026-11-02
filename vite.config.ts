@@ -21,14 +21,13 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       'framer-motion': fileURLToPath(new URL('./src/lib/motion.tsx', import.meta.url)),
-      '@google/genai': fileURLToPath(new URL('node_modules/@google/genai/dist/web/index.mjs', import.meta.url)),
       'lucide-react': resolvePkg('lucide-react'),
       '@supabase/supabase-js': resolvePkg('@supabase/supabase-js'),
     },
   },
   optimizeDeps: {
     include: ['lucide-react', '@supabase/supabase-js'],
-    exclude: ['framer-motion', '@google/genai'],
+    exclude: ['framer-motion'],
   },
   build: {
     rollupOptions: {
@@ -36,7 +35,6 @@ export default defineConfig({
         manualChunks: {
           'lucide-react': ['lucide-react'],
           supabase: ['@supabase/supabase-js'],
-          genai: ['@google/genai'],
         },
       },
     },

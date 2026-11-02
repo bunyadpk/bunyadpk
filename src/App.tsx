@@ -11,7 +11,6 @@ import AIWidget from '@/components/AIWidget';
 import LeadForm from '@/components/LeadForm';
 import LdaDocsHub from '@/components/LdaDocsHub';
 import MasterMaps from '@/components/MasterMaps';
-import { motion } from '@/lib/motion';
 import { Briefcase, ShieldCheck } from 'lucide-react';
 import {
   supabase, isSupabaseConfigured, type MaterialRates, DEFAULT_RATES,
@@ -133,11 +132,6 @@ export default function App() {
 
 function SectionDivider() {
   return (
-    <motion.div
-      initial={{ opacity: 0, scaleX: 0 }}
-      whileInView={{ opacity: 1, scaleX: 1 }}
-      viewport={{ once: true }}
-      className="my-8 h-px bg-gradient-to-r from-transparent via-cyan/30 to-transparent"
-    />
+    <div className="my-8 h-px bg-gradient-to-r from-transparent via-cyan/30 to-transparent" />
   );
 }
