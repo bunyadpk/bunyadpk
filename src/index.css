@@ -25,6 +25,12 @@ html, body, #root {
   transition-duration: 0s !important;
 }
 
+.animate-grid-pan,
+.animate-ticker {
+  animation: none !important;
+  transform: none !important;
+}
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: rgba(5, 11, 20, 0.6); }
 ::-webkit-scrollbar-thumb { background: rgba(0, 242, 254, 0.35); border-radius: 4px; }
