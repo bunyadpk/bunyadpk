@@ -147,6 +147,7 @@ function LeadsPanel() {
   const [statusFilter, setStatusFilter] = useState<'All' | Lead['status']>('All');
   const [search, setSearch] = useState('');
   const [showNewLead, setShowNewLead] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -235,7 +236,7 @@ function LeadsPanel() {
         <div className="space-y-2">
           {filteredLeads.map((l) => (
             <motion.div key={l.id} layout initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-              className="glass rounded-lg p-3">
+              onClick={() => setSelectedLead(l)} className="glass cursor-pointer rounded-lg p-3 transition hover:border-cyan/40">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-platinum">{l.full_name}</p>
@@ -271,6 +272,29 @@ function LeadsPanel() {
         </div>
       )}
       {showNewLead && <NewLeadModal onClose={() => setShowNewLead(false)} onCreate={createLead} />}
+      {selectedLead && <LeadDetailDrawer lead={selectedLead} onClose={() => setSelectedLead(null)} onStatusChange={(status) => { void updateStatus(selectedLead.id, status); setSelectedLead({ ...selectedLead, status }); }} />}
+    </div>
+  );
+}
+
+function LeadDetailDrawer({ lead, onClose, onStatusChange }: { lead: Lead; onClose: () => void; onStatusChange: (status: Lead['status']) => void }) {
+  const statuses: Lead['status'][] = ['New', 'Contacted', 'In-Progress', 'Closed'];
+  return (
+    <div className="fixed inset-0 z-[110] bg-obsidian/70 backdrop-blur-sm" onClick={onClose}>
+      <aside className="absolute right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l border-cyan/25 bg-[#07111d] p-5 shadow-2xl shadow-cyan/10" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 border-b border-cyan/15 pb-4">
+          <div><p className="font-mono text-[10px] uppercase tracking-wider text-cyan/60">Lead detail</p><h3 className="mt-1 font-display text-xl font-bold text-platinum">{lead.full_name}</h3></div>
+          <button onClick={onClose} className="rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close lead details"><X className="h-5 w-5" /></button>
+        </div>
+        <div className="mt-5 space-y-3">
+          {[['Phone', lead.phone || 'Not provided'], ['Email', lead.email || 'Not provided'], ['Society', lead.society_interest || 'Not selected'], ['Budget', lead.budget || 'Not provided'], ['Received', lead.created_at ? new Date(lead.created_at).toLocaleString() : 'Recently']].map(([label, value]) => (
+            <div key={label} className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3"><p className="font-mono text-[10px] uppercase text-cyan/60">{label}</p><p className="mt-1 text-sm text-platinum">{value}</p></div>
+          ))}
+          <div className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3"><p className="font-mono text-[10px] uppercase text-cyan/60">Message</p><p className="mt-1 text-sm leading-6 text-platinum/80">{lead.message || 'No message was added.'}</p></div>
+        </div>
+        <div className="mt-5"><p className="font-mono text-[10px] uppercase text-cyan/60">Update status</p><div className="mt-2 grid grid-cols-2 gap-2">{statuses.map((status) => <button key={status} onClick={() => onStatusChange(status)} className={`rounded-md border px-3 py-2 text-xs transition ${lead.status === status ? 'border-cyan bg-cyan/15 text-cyan' : 'border-cyan/15 text-platinum/60 hover:border-cyan/40 hover:text-cyan'}`}>{status}</button>)}</div></div>
+        {lead.phone && <a href={waLink(`Asalam o Alaikum ${lead.full_name}, regarding your Bunyad inquiry`, lead.phone)} target="_blank" rel="noopener noreferrer" className="btn-cyan mt-5 w-full"><MessageCircle className="h-4 w-4" /> Contact on WhatsApp</a>}
+      </aside>
     </div>
   );
 }
@@ -306,6 +330,7 @@ function InventoryPanel() {
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ title: '', society_name: '', plot_size: '', block: '', price: '' });
+  const [reservationProperty, setReservationProperty] = useState<Property | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -332,6 +357,22 @@ function InventoryPanel() {
       setItems((prev) => [{ ...row, id: crypto.randomUUID(), created_at: new Date().toISOString() } as Property, ...prev]);
     }
     setForm({ title: '', society_name: '', plot_size: '', block: '', price: '' });
+  }
+
+  async function reserve(property: Property, reservation: { full_name: string; phone: string; message: string }) {
+    const lead: Omit<Lead, 'id' | 'created_at'> = {
+      full_name: reservation.full_name,
+      phone: reservation.phone,
+      email: '',
+      society_interest: property.society_name,
+      budget: property.price || '',
+      message: `Reservation request for ${property.title} (${property.plot_size || 'plot'}${property.block ? `, Block ${property.block}` : ''}). ${reservation.message}`,
+      status: 'New',
+    };
+    if (isSupabaseConfigured && supabase) await supabase.from('leads').insert(lead);
+    setItems((prev) => prev.map((item) => item.id === property.id ? { ...item, status: 'Reserved' } : item));
+    if (isSupabaseConfigured && supabase) await supabase.from('properties').update({ status: 'Reserved' }).eq('id', property.id);
+    setReservationProperty(null);
   }
 
   async function cycle(id: string) {
@@ -380,11 +421,14 @@ function InventoryPanel() {
                     <p className="font-semibold text-platinum">{p.title}</p>
                     <p className="font-mono text-[11px] text-cyan/60">{p.society_name} · {p.plot_size || '—'} {p.block ? `· Block ${p.block}` : ''} · {p.price || '—'}</p>
                   </div>
-                  <button onClick={() => cycle(p.id)} className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
+                  <div className="flex items-center gap-1.5">
+                    {p.status === 'Available' && <button onClick={() => setReservationProperty(p)} className="rounded border border-cyan/30 px-2 py-1 text-[10px] font-medium text-cyan transition hover:bg-cyan/10">Reserve</button>}
+                    <button onClick={() => cycle(p.id)} className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
                     p.status === 'Available' ? 'bg-cyan/20 text-cyan' : p.status === 'Reserved' ? 'bg-yellow-400/15 text-yellow-400' : 'bg-green-400/15 text-green-400'
                   }`}>
-                    <Icon className="h-3.5 w-3.5" /> {p.status}
-                  </button>
+                      <Icon className="h-3.5 w-3.5" /> {p.status}
+                    </button>
+                  </div>
                 </div>
                 {p.verified_by_bintaha && <span className="chip mt-1.5"><Building2 className="h-3 w-3" /> Verified</span>}
               </div>
@@ -392,6 +436,21 @@ function InventoryPanel() {
           })}
         </div>
       )}
+      {reservationProperty && <ReservationModal property={reservationProperty} onClose={() => setReservationProperty(null)} onReserve={reserve} />}
+    </div>
+  );
+}
+
+function ReservationModal({ property, onClose, onReserve }: { property: Property; onClose: () => void; onReserve: (property: Property, reservation: { full_name: string; phone: string; message: string }) => Promise<void> }) {
+  const [form, setForm] = useState({ full_name: '', phone: '', message: '' });
+  const submit = () => { if (form.full_name && form.phone) void onReserve(property, form); };
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-obsidian/80 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="glass-strong w-full max-w-md rounded-2xl p-5" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3"><div><p className="font-mono text-[10px] uppercase text-cyan/60">Plot reservation</p><h3 className="mt-1 font-display text-lg font-bold text-platinum">{property.title}</h3><p className="mt-1 text-xs text-platinum/60">{property.society_name} · {property.plot_size} · {property.price}</p></div><button onClick={onClose} className="rounded p-1 text-cyan/60 hover:bg-cyan/10 hover:text-cyan" aria-label="Close reservation"><X className="h-5 w-5" /></button></div>
+        <div className="mt-4 space-y-2"><input placeholder="Full name *" value={form.full_name} onChange={(event) => setForm({ ...form, full_name: event.target.value })} className="w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" /><input placeholder="Phone / WhatsApp *" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" /><textarea placeholder="Notes or preferred callback time" value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} rows={3} className="w-full rounded-md border border-cyan/20 bg-obsidian/60 px-3 py-2 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none" /></div>
+        <div className="mt-4 flex justify-end gap-2"><button onClick={onClose} className="btn-ghost">Cancel</button><button onClick={submit} className="btn-cyan"><CheckCircle2 className="h-4 w-4" /> Submit Reservation</button></div>
+      </div>
     </div>
   );
 }

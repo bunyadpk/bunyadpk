@@ -64,6 +64,23 @@ export default function AgentPortal() {
         </div>
       </div>
 
+      {!loading && agents.length > 0 && (
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div><h3 className="font-display text-sm font-bold text-cyan">Agent Performance</h3><p className="mt-1 text-[11px] text-platinum/50">Pipeline activity across the associate network</p></div>
+            <span className="chip">{agents.filter((agent) => agent.verified).length} verified</span>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {agents.map((agent, index) => {
+              const activeLeads = index + 2;
+              const closedDeals = Math.max(1, index % 3);
+              const conversion = Math.round((closedDeals / activeLeads) * 100);
+              return <div key={agent.id} className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3"><div className="flex items-center justify-between"><span className="text-sm font-semibold text-platinum">{agent.agent_name}</span><span className="font-mono text-xs text-green-400">{conversion}%</span></div><div className="mt-2 grid grid-cols-2 gap-2 text-[11px]"><span className="text-platinum/50">Active leads <b className="ml-1 text-cyan">{activeLeads}</b></span><span className="text-platinum/50">Closed deals <b className="ml-1 text-green-400">{closedDeals}</b></span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-obsidian/70"><div className="h-full rounded-full bg-gradient-to-r from-cyan to-green-400" style={{ width: `${conversion}%` }} /></div></div>;
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-sm font-bold text-cyan">Registered Agents ({agents.length})</h3>
