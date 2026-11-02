@@ -60,52 +60,140 @@ export default function HudShell({
         </motion.div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-cyan/20 bg-obsidian/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-cyan/20 bg-[#050b14]/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 max-w-[44px] max-h-[44px] shrink-0 items-center justify-center rounded-xl border border-cyan-400/50 bg-[#060b13] p-1 shadow-cyan-glow">
               {!logoFailed ? (
-                <img src="/assets/images/bunyad.pk_logo.jpg" alt="BUNYAD logo" className="h-full w-full rounded-lg object-cover" onError={() => setLogoFailed(true)} />
+                <img
+                  src="./assets/images/bunyad.pk%20logo.jpg"
+                  alt="BUNYAD logo"
+                  className="h-full w-full rounded-lg object-cover"
+                  onError={() => {
+                    // Fallback to absolute relative without space if needed
+                    const fallbackImg = new Image();
+                    fallbackImg.src = "./public/assets/images/bunyad.pk%20logo.jpg";
+                    fallbackImg.onload = () => setLogoFailed(false);
+                    fallbackImg.onerror = () => setLogoFailed(true);
+                  }}
+                />
               ) : (
                 <span className="font-display text-2xl font-black italic text-cyan neon-text">B</span>
               )}
             </div>
             <div className="min-w-0 leading-tight">
-              <h1 className="truncate font-display text-base font-black tracking-wider text-cyan neon-text sm:text-lg">BUNYAD <span className="text-cyan/70">بنیاد</span></h1>
-              <p className="truncate font-mono text-[8px] tracking-[0.08em] text-cyan/60 sm:text-[9px]">Bin Taha Associates &amp; Builders • CEO {CEO_NAME}</p>
+              <h1 className="truncate font-display text-base font-black tracking-wider text-cyan neon-text sm:text-lg">
+                BUNYAD <span className="text-cyan/70">بنیاد</span>
+              </h1>
+              <p className="truncate font-mono text-[8px] tracking-[0.08em] text-cyan/60 sm:text-[9px]">
+                Bin Taha Associates &amp; Builders • CEO {CEO_NAME}
+              </p>
             </div>
           </div>
 
-          <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary navigation">
+          {/* Desktop & Laptop Navigation */}
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
             {NAV.map((item) => (
-              <button key={item.id} type="button" onClick={() => handleNav(item.id)} className={`z-10 flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium transition ${active === item.id ? 'bg-cyan/15 text-cyan neon-border' : 'text-platinum/70 hover:bg-cyan/5 hover:text-cyan'}`}>
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleNav(item.id)}
+                className={`z-10 flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition ${
+                  active === item.id
+                    ? 'bg-cyan/15 text-cyan border border-cyan/40 shadow-cyan-glow'
+                    : 'text-platinum/70 hover:bg-cyan/5 hover:text-cyan'
+                }`}
+              >
                 <item.icon className="h-3.5 w-3.5" /> {item.label}
               </button>
             ))}
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={onReplay} className="hidden cursor-pointer items-center gap-1.5 rounded-md border border-cyan/30 px-2.5 py-1.5 text-xs text-cyan transition hover:bg-cyan/10 sm:flex"><RotateCw className="h-3.5 w-3.5" /> Replay</button>
-            <a href={waLink(`Asalam o Alaikum, I'm interested in BUNYAD. Please connect me with CEO ${CEO_NAME}.`)} target="_blank" rel="noopener noreferrer" className="z-10 flex cursor-pointer items-center gap-1.5 rounded-md bg-cyan/90 px-3 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-cyan hover:shadow-cyan-glow"><Phone className="h-3.5 w-3.5" /> CEO</a>
-            <button type="button" aria-label="Open navigation menu" aria-expanded={isMenuOpen} onClick={() => setIsMenuOpen((value) => !value)} className="z-[70] cursor-pointer rounded-md p-1 lg:hidden">{isMenuOpen ? <X className="h-5 w-5 text-cyan" /> : <Menu className="h-5 w-5 text-cyan" />}</button>
+            <button
+              type="button"
+              onClick={onReplay}
+              className="hidden cursor-pointer items-center gap-1.5 rounded-md border border-cyan/30 px-2.5 py-1.5 text-xs text-cyan transition hover:bg-cyan/10 sm:flex"
+            >
+              <RotateCw className="h-3.5 w-3.5" /> Replay
+            </button>
+            <a
+              href={waLink(`Asalam o Alaikum, I'm interested in BUNYAD. Please connect me with CEO ${CEO_NAME}.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="z-10 flex cursor-pointer items-center gap-1.5 rounded-md bg-cyan/90 px-3 py-1.5 text-xs font-semibold text-obsidian transition hover:bg-cyan hover:shadow-cyan-glow"
+            >
+              <Phone className="h-3.5 w-3.5" /> CEO
+            </a>
+            <button
+              type="button"
+              aria-label="Open navigation menu"
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen((value) => !value)}
+              className="z-[70] cursor-pointer rounded-md p-1.5 md:hidden text-cyan hover:bg-cyan/10"
+            >
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
 
+        {/* Mobile slide-out drawer */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.nav initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 24 }} className="absolute right-3 top-[calc(100%+8px)] z-[60] w-[min(86vw,320px)] rounded-2xl border border-cyan/30 bg-[#060b13] p-3 shadow-2xl shadow-cyan/10 lg:hidden" aria-label="Mobile navigation">
-              {NAV.map((item) => (
-                <button key={item.id} type="button" onClick={() => handleNav(item.id)} className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-sm transition ${active === item.id ? 'bg-cyan/15 text-cyan' : 'text-platinum/80 hover:bg-cyan/10 hover:text-cyan'}`}><item.icon className="h-4 w-4" /> {item.label}</button>
-              ))}
-              <button type="button" onClick={() => { onReplay(); setIsMenuOpen(false); }} className="mt-2 flex w-full cursor-pointer items-center gap-3 border-t border-cyan/15 px-3 py-3 text-sm text-cyan/80"><RotateCw className="h-4 w-4" /> Replay Intro</button>
-            </motion.nav>
+            <>
+              <div
+                className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm md:hidden"
+                onClick={() => setIsMenuOpen(false)}
+              />
+              <motion.nav
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute right-3 top-[calc(100%+8px)] z-[60] w-[min(88vw,320px)] rounded-2xl border border-cyan/30 bg-[#060b13] p-3 shadow-2xl shadow-cyan/20 md:hidden"
+                aria-label="Mobile navigation"
+              >
+                {NAV.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleNav(item.id)}
+                    className={`flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
+                      active === item.id ? 'bg-cyan/15 text-cyan font-bold' : 'text-platinum/80 hover:bg-cyan/10 hover:text-cyan'
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4" /> {item.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    onReplay();
+                    setIsMenuOpen(false);
+                  }}
+                  className="mt-2 flex w-full cursor-pointer items-center gap-3 border-t border-cyan/15 px-3 py-2.5 text-sm text-cyan/80 hover:text-cyan"
+                >
+                  <RotateCw className="h-4 w-4" /> Replay Intro
+                </button>
+              </motion.nav>
+            </>
           )}
         </AnimatePresence>
       </header>
 
-      <div className="relative z-10 flex justify-center px-4 pt-3"><span className="chip">POWERED BY BIN TAHA ASSOCIATES &amp; BUILDERS · بن طہٰ ایسوسی ایٹس</span></div>
+      <div className="relative z-10 flex justify-center px-4 pt-3">
+        <span className="chip border border-cyan/30 bg-cyan/5 px-3 py-1 rounded-full text-xs text-cyan/90 font-mono tracking-wider">
+          POWERED BY BIN TAHA ASSOCIATES &amp; BUILDERS · بن طہٰ ایسوسی ایٹس
+        </span>
+      </div>
       <main className="relative z-10 mx-auto max-w-[1400px] px-4 py-6">{children}</main>
-      <footer className="relative z-10 mt-8 border-t border-cyan/15 px-4 py-6 text-center"><p className="font-mono text-[11px] text-cyan/50">BUNYAD.PK · CEO {CEO_NAME} (طہٰ مبین بھٹہ) · {CEO_PHONE} · Block J, LDA Avenue 1, Lahore</p><p className="mt-1 font-mono text-[10px] text-platinum/40">© 2026 Bin Taha Associates &amp; Builders · All rights reserved</p></footer>
+      <footer className="relative z-10 mt-8 border-t border-cyan/15 px-4 py-6 text-center">
+        <p className="font-mono text-[11px] text-cyan/50">
+          BUNYAD.PK · CEO {CEO_NAME} (طہٰ مبین بھٹہ) · {CEO_PHONE} · Block J, LDA Avenue 1, Lahore
+        </p>
+        <p className="mt-1 font-mono text-[10px] text-platinum/40">
+          © 2026 Bin Taha Associates &amp; Builders · All rights reserved
+        </p>
+      </footer>
     </div>
   );
 }
