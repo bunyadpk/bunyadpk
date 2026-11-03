@@ -11,15 +11,18 @@ import AIWidget from '@/components/AIWidget';
 import LeadForm from '@/components/LeadForm';
 import LdaDocsHub from '@/components/LdaDocsHub';
 import MasterMaps from '@/components/MasterMaps';
-import { Briefcase, ShieldCheck } from 'lucide-react';
+import PortalModules from '@/components/PortalModules';
+import { Briefcase, ShieldCheck, PlusCircle, Building2, FileText, CheckCircle2 } from 'lucide-react';
 import {
   supabase, isSupabaseConfigured, type MaterialRates, DEFAULT_RATES,
 } from '@/lib/supabase';
+import { CEO_PHONE, CEO_NAME } from '@/lib/constants';
 
 export default function App() {
   const [introDone, setIntroDone] = useState(false);
   const [active, setActive] = useState<NavId>('home');
   const [rates, setRates] = useState<MaterialRates>(DEFAULT_RATES);
+  const [activeModal, setActiveModal] = useState<'about' | 'terms' | 'add-property' | null>(null);
 
   // Stop auto-jumping to hash sections on reload — always force scroll to top
   useEffect(() => {
@@ -74,21 +77,67 @@ export default function App() {
       <Ticker rates={rates} />
 
       <HudShell onReplay={handleReplayIntro} active={active} onNav={setActive}>
+        
+        {/* Quick Utility Launch Action Bar */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan/20 bg-[#040810]/80 p-3.5 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className="chip border-emerald-400/40 text-emerald-400 font-mono text-[10px]">
+              BUNYAD.PK VERIFIED COMMAND
+            </span>
+            <span className="hidden sm:inline font-mono text-[11px] text-platinum/60">
+              Direct Access to Real Estate Operations
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveModal('add-property')}
+              className="btn-cyan flex items-center gap-1.5 py-1.5 px-3 text-xs font-bold shadow-cyan-glow cursor-pointer"
+            >
+              <PlusCircle className="h-3.5 w-3.5 text-obsidian" /> Add Property
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModal('about')}
+              className="btn-ghost flex items-center gap-1.5 py-1.5 px-3 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15 cursor-pointer"
+            >
+              <Building2 className="h-3.5 w-3.5" /> About BUNYAD
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModal('terms')}
+              className="btn-ghost flex items-center gap-1.5 py-1.5 px-3 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15 cursor-pointer"
+            >
+              <FileText className="h-3.5 w-3.5" /> Terms &amp; Bylaws
+            </button>
+          </div>
+        </div>
+
         {/* Command Deck / Home */}
         <section id="home" className="scroll-mt-24">
           <Overview materialCount={4} onOpenAI={openAI} />
           <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <LeadForm />
-            <div className="glass rounded-xl p-5">
-              <h3 className="font-display text-sm font-bold text-cyan">Why Bunyad?</h3>
-              <ul className="mt-3 space-y-2 text-sm text-platinum/70">
-                <li>• 38+ Lahore housing societies with live DC rates &amp; FBR valuations</li>
-                <li>• Real-time civil material rates (cement, steel, bricks, crush)</li>
-                <li>• Gemini-powered AI architectural consultant</li>
-                <li>• 100% escrow milestone protection</li>
-                <li>• Direct access to CEO Taha Mubeen Bhutta</li>
-                <li>• Authorized agent network with verified badges</li>
-              </ul>
+            <div className="glass rounded-xl p-5 flex flex-col justify-between">
+              <div>
+                <h3 className="font-display text-sm font-bold text-cyan">Why Bunyad?</h3>
+                <ul className="mt-3 space-y-2 text-sm text-platinum/70">
+                  <li>• 38+ Lahore housing societies with live DC rates &amp; FBR valuations</li>
+                  <li>• Real-time civil material rates (cement, steel, bricks, crush)</li>
+                  <li>• Gemini-powered AI architectural consultant</li>
+                  <li>• 100% escrow milestone protection</li>
+                  <li>• Direct access to CEO Taha Mubeen Bhutta</li>
+                  <li>• Authorized agent network with verified badges</li>
+                </ul>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-cyan/15 flex items-center justify-between text-xs font-mono text-cyan/70">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> PEC Category C Registered
+                </span>
+                <span>LDA Avenue 1, Lahore</span>
+              </div>
             </div>
           </div>
         </section>
@@ -140,7 +189,35 @@ export default function App() {
           </div>
           <AdminPanel rates={rates} onRatesChange={setRates} />
         </section>
+
+        {/* Interactive Comprehensive Portal Footer */}
+        <footer className="mt-16 pt-8 border-t border-cyan/15 text-xs text-platinum/60 space-y-4 text-center">
+          <div className="flex flex-wrap justify-center gap-4 text-xs font-bold text-cyan">
+            <button type="button" onClick={() => setActiveModal('about')} className="hover:underline cursor-pointer">
+              About BUNYAD.PK
+            </button>
+            <span>•</span>
+            <button type="button" onClick={() => setActiveModal('add-property')} className="hover:underline cursor-pointer">
+              Add Property Listing
+            </button>
+            <span>•</span>
+            <button type="button" onClick={() => setActiveModal('terms')} className="hover:underline cursor-pointer">
+              Terms &amp; LDA Bylaws
+            </button>
+            <span>•</span>
+            <a href={`tel:${CEO_PHONE}`} className="hover:underline">
+              CEO Hotline: 0321-9404812
+            </a>
+          </div>
+
+          <p className="text-[11px] text-platinum/40">
+            &copy; 2026 BUNYAD.PK (بنیاد). All Rights Reserved. Supervised by CEO {CEO_NAME} • Block J, Commercial Broadway, LDA Avenue 1, Lahore.
+          </p>
+        </footer>
       </HudShell>
+
+      {/* Dynamic Popups for About, Terms & Add Property */}
+      <PortalModules activeModule={activeModal} onClose={() => setActiveModal(null)} />
 
       <AIWidget />
     </div>
