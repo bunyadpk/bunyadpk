@@ -53,7 +53,7 @@ export default function AIWidget() {
 
     const lower = userText.toLowerCase();
 
-    // Board Resolution & Instant CEO Dispatch Trigger
+    // Board Resolution & Instant Ingestion with Exact Schema Columns
     if (
       lower.includes('add') ||
       lower.includes('post') ||
@@ -64,33 +64,35 @@ export default function AIWidget() {
       lower.includes('plot')
     ) {
       setTimeout(async () => {
-        let extractedSociety = 'Etihad Town, Lahore';
-        if (lower.includes('etihad')) extractedSociety = 'Etihad Town, Lahore';
-        else if (lower.includes('dha')) extractedSociety = 'DHA Phase 9 Prism, Lahore';
-        else if (lower.includes('lda')) extractedSociety = 'LDA Avenue 1, Lahore';
-        else if (lower.includes('bahria')) extractedSociety = 'Bahria Town, Lahore';
-        else if (lower.includes('islamabad')) extractedSociety = 'DHA Islamabad';
-        else if (lower.includes('karachi')) extractedSociety = 'Bahria Town, Karachi';
+        let extractedSociety = 'Etihad Town';
+        if (lower.includes('etihad')) extractedSociety = 'Etihad Town';
+        else if (lower.includes('dha phase 9') || lower.includes('prism')) extractedSociety = 'DHA Phase 9 Prism';
+        else if (lower.includes('dha phase 7')) extractedSociety = 'DHA Phase 7';
+        else if (lower.includes('dha')) extractedSociety = 'DHA Lahore';
+        else if (lower.includes('lda')) extractedSociety = 'LDA Avenue 1';
+        else if (lower.includes('bahria')) extractedSociety = 'Bahria Town Lahore';
+        else if (lower.includes('jubilee')) extractedSociety = 'Jubilee Town';
 
         try {
           if (isSupabaseConfigured && supabase) {
+            // Using exact columns: Title, Type, Society, Price, Phone, Description, Image
             await supabase.from('properties').insert([
               {
-                title: `AI Board Ingestion: ${userText.slice(0, 45)}`,
-                type: lower.includes('house') || lower.includes('makan') ? 'House' : 'Plot',
-                society: extractedSociety,
-                price: 'Demand on Call',
-                phone: CEO_PHONE,
-                desc: `24/7 AI Ingestion Desk: "${userText}"`,
-                img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+                Title: `AI Board Ingestion: ${userText.slice(0, 45)}`,
+                Type: lower.includes('house') || lower.includes('makan') ? 'House' : 'Plot',
+                Society: extractedSociety,
+                Price: 'Demand on Call',
+                Phone: CEO_PHONE,
+                Description: `24/7 AI Ingestion Desk: "${userText}"`,
+                Image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
               }
             ]);
           }
-        } catch {
-          // ignore
+        } catch (err) {
+          console.error(err);
         }
 
-        const alertLink = waLink(`[BUNYAD BOARD EXECUTIVE ALERT]\nCEO Taha Mubeen Bhutta, a client just submitted a listing via 24/7 AI Director Desk:\n"${userText}"\nSociety: ${extractedSociety}\nPlease approve NDC demarcation.`);
+        const alertLink = waLink(`[BUNYAD BOARD EXECUTIVE ALERT]\nCEO Taha Mubeen Bhutta, client submitted via AI Director Desk:\n"${userText}"\nSociety: ${extractedSociety}\nPlease approve NDC.`);
 
         setMessages((prev) => [
           ...prev,
@@ -107,14 +109,14 @@ export default function AIWidget() {
       return;
     }
 
-    // General Real Estate Advisory
+    // General Advisory
     setTimeout(() => {
       let replyEngine: 'Gemini Director' | 'ChatGPT Director' = 'Gemini Director';
       let reply = '';
 
       if (lower.includes('tax') || lower.includes('7e') || lower.includes('fbr') || lower.includes('cost') || lower.includes('valuation')) {
         replyEngine = 'ChatGPT Director';
-        reply = `[FINANCIAL DIRECTIVE - GPT ENGINE]:\nFBR Section 7E aur transfer duty audit ke mutabiq filers ke liye basic transaction charges 3% hain jabki non-filers par withholding tax lagu hai. Turnkey projects mein milestone escrow structure lagoo hota hai.`;
+        reply = `[FINANCIAL DIRECTIVE - GPT ENGINE]:\nFBR Section 7E aur transfer duty audit ke mutabiq filers ke liye basic transaction charges 3% hain jabki non-filers par withholding tax lagu hai. Turnkey projects mein escrow release milestone-based honi zaroori hai.`;
       } else if (lower.includes('bylaws') || lower.includes('lda') || lower.includes('cda') || lower.includes('saria') || lower.includes('cement')) {
         replyEngine = 'Gemini Director';
         reply = `[TECHNICAL DIRECTIVE - GEMINI CIVIL ENGINE]:\nPEC Category C aur LDA Building Regulations 2026 ke mutabiq Grade-60 steel aur 1:2:4 batch mix mandatory hain. Mandatory setbacks ke baghair structural sanction mumkin nahi.`;
