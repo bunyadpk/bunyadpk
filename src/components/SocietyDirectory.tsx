@@ -17,7 +17,6 @@ interface PropertyItem {
   img: string;
 }
 
-// Complete Lahore 38 Societies Master Directory
 const ALL_38_SOCIETIES = [
   'All',
   'LDA Avenue 1',
@@ -68,7 +67,7 @@ const FALLBACK_PROPERTIES: PropertyItem[] = [
     society: 'LDA Avenue 1',
     price: 'PKR 17,500,000',
     phone: CEO_PHONE,
-    desc: 'Direct possession plot on 50ft wide road near Commercial Broadway. Ready for immediate construction under LDA bylaws.',
+    desc: 'Direct possession plot on 50ft wide road near Commercial Broadway. Ready for immediate construction.',
     img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -78,7 +77,7 @@ const FALLBACK_PROPERTIES: PropertyItem[] = [
     society: 'LDA Avenue 1',
     price: 'PKR 48,000,000',
     phone: CEO_PHONE,
-    desc: 'Brand new 5-bed modern villa with double height lobby, Spanish tiles, Grohe fittings, and servant quarter.',
+    desc: 'Brand new 5-bed modern villa with double height lobby, Spanish tiles, and servant quarter.',
     img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -88,7 +87,7 @@ const FALLBACK_PROPERTIES: PropertyItem[] = [
     society: 'Jubilee Town',
     price: 'PKR 10,500,000',
     phone: CEO_PHONE,
-    desc: 'Park face location, all dues clear with official NDC. Electricity and gas network operational.',
+    desc: 'Park face location, all dues clear with official NDC.',
     img: 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -98,7 +97,7 @@ const FALLBACK_PROPERTIES: PropertyItem[] = [
     society: 'LDA Avenue 1',
     price: 'PKR 35,000,000',
     phone: CEO_PHONE,
-    desc: 'Main boulevard commercial building with confirmed corporate rental yield. High footfall zone.',
+    desc: 'Main boulevard commercial building with confirmed corporate rental yield.',
     img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -108,7 +107,7 @@ const FALLBACK_PROPERTIES: PropertyItem[] = [
     society: 'DHA Rahbar Phase 11',
     price: 'PKR 32,000,000',
     phone: CEO_PHONE,
-    desc: 'Hot location plot near Ring Road interchange. Direct allocation, no litigation.',
+    desc: 'Hot location plot near Ring Road interchange. Direct allocation.',
     img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -118,7 +117,7 @@ const FALLBACK_PROPERTIES: PropertyItem[] = [
     society: 'Izmir Town',
     price: 'PKR 38,500,000',
     phone: CEO_PHONE,
-    desc: 'Solid construction with Grade-60 steel, solid ash wood doors, and imported fittings. Gated secure community.',
+    desc: 'Solid construction with Grade-60 steel, solid ash wood doors, and imported fittings.',
     img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
   }
 ];
@@ -138,125 +137,108 @@ function SocietyDirectory() {
     }
   });
 
-  // ROI Calculator State
   const [roiPrice, setRoiPrice] = useState(15000000);
   const [roiGrowth, setRoiGrowth] = useState(12);
   const [roiYears, setRoiYears] = useState(3);
 
-  // Full Supabase Batch Sync
-  useEffect(() => {
-    async function fetchAllProperties() {
-      if (!isSupabaseConfigured || !supabase) return;
-      setLoading(true);
-      try {
-        let allRows: any[] = [];
-        let from = 0;
-        const step = 1000;
-        let keepGoing = true;
+  async function loadData() {
+    if (!isSupabaseConfigured || !supabase) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('id', { ascending: false });
 
-        while (keepGoing) {
-          const { data, error } = await supabase
-            .from('properties')
-            .select('*')
-            .range(from, from + step - 1);
-
-          if (error) {
-            console.error('Supabase fetch error:', error);
-            break;
-          }
-
-          if (data && data.length > 0) {
-            allRows = allRows.concat(data);
-            if (data.length < step) {
-              keepGoing = false;
-            } else {
-              from += step;
-            }
-          } else {
-            keepGoing = false;
-          }
-        }
-
-        if (allRows.length > 0) {
-          const formatted: PropertyItem[] = allRows.map((item: any, idx: number) => ({
-            id: item.id || item.ID || `prop-${idx}`,
-            title: item.title || item.Title || 'Verified Property',
-            type: item.type || item.Type || 'Plot',
-            society: item.society || item.Society || 'Lahore',
-            price: item.price ? (String(item.price).startsWith('PKR') ? item.price : `PKR ${item.price}`) : 'Demand on Call',
-            phone: item.phone || item.Phone || CEO_PHONE,
-            desc: item.desc || item.Description || 'Direct verified listing on BUNYAD portal.',
-            img: item.img || item.Image || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
-          }));
-          setProperties(formatted);
-        }
-      } catch (err) {
-        console.warn('Fallback initialized:', err);
-      } finally {
-        setLoading(false);
+      if (error) {
+        console.error('Supabase fetch error:', error);
+        return;
       }
-    }
 
-    fetchAllProperties();
+      if (data && data.length > 0) {
+        const mapped: PropertyItem[] = data.map((item: any, idx: number) => ({
+          id: item.id || `prop-${idx}`,
+          title: item.title || 'Verified Property',
+          type: item.type || 'Plot',
+          society: item.society || 'Lahore',
+          price: item.price ? (String(item.price).startsWith('PKR') ? item.price : `PKR ${item.price}`) : 'Demand on Call',
+          phone: item.phone || CEO_PHONE,
+          desc: item.desc || 'Direct verified listing on BUNYAD portal.',
+          img: item.img || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+        }));
+        setProperties(mapped);
+      }
+    } catch (err) {
+      console.warn('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   function toggleSaveProperty(id: string | number) {
-    let updated: Array<string | number>;
-    if (savedIds.includes(id)) {
-      updated = savedIds.filter((x) => x !== id);
-    } else {
-      updated = [...savedIds, id];
-    }
+    let updated = savedIds.includes(id)
+      ? savedIds.filter((x) => x !== id)
+      : [...savedIds, id];
     setSavedIds(updated);
     localStorage.setItem('bunyad_saved_properties', JSON.stringify(updated));
   }
 
+  // Smart Fuzzy Filter
   const filtered = useMemo(() => {
     return properties.filter((item) => {
+      const socName = (item.society || '').toLowerCase();
+      const targetSoc = selectedSociety.toLowerCase();
+
+      // Smart match: chahe 'Etihad Town' ho ya 'Etihad Town, Lahore'
       const matchSoc =
         selectedSociety === 'All' ||
-        item.society.toLowerCase().includes(selectedSociety.toLowerCase());
+        socName.includes(targetSoc) ||
+        targetSoc.includes(socName) ||
+        (targetSoc.includes('etihad') && socName.includes('etihad')) ||
+        (targetSoc.includes('dha') && socName.includes('dha')) ||
+        (targetSoc.includes('bahria') && socName.includes('bahria')) ||
+        (targetSoc.includes('lda') && socName.includes('lda'));
 
+      const itemType = (item.type || '').toLowerCase();
       const matchCat =
         selectedCategory === 'all' ||
-        (selectedCategory === 'plot' && item.type.toLowerCase().includes('plot')) ||
-        (selectedCategory === 'house' &&
-          (item.type.toLowerCase().includes('house') || item.type.toLowerCase().includes('home'))) ||
-        (selectedCategory === 'commercial' &&
-          (item.type.toLowerCase().includes('commercial') ||
-            item.type.toLowerCase().includes('plaza') ||
-            item.type.toLowerCase().includes('shop')));
+        (selectedCategory === 'plot' && itemType.includes('plot')) ||
+        (selectedCategory === 'house' && (itemType.includes('house') || itemType.includes('home'))) ||
+        (selectedCategory === 'commercial' && (itemType.includes('commercial') || itemType.includes('plaza')));
 
       const q = searchQuery.toLowerCase();
       const matchQuery =
         !q ||
-        item.title.toLowerCase().includes(q) ||
-        item.society.toLowerCase().includes(q) ||
-        item.desc.toLowerCase().includes(q) ||
-        item.price.toLowerCase().includes(q);
+        (item.title || '').toLowerCase().includes(q) ||
+        socName.includes(q) ||
+        (item.desc || '').toLowerCase().includes(q) ||
+        (item.price || '').toLowerCase().includes(q);
 
       return matchSoc && matchCat && matchQuery;
     });
   }, [properties, selectedSociety, selectedCategory, searchQuery]);
 
   const totalCount = properties.length;
-  const plotCount = properties.filter((p) => p.type.toLowerCase().includes('plot')).length;
-  const houseCount = properties.filter(
-    (p) => p.type.toLowerCase().includes('house') || p.type.toLowerCase().includes('home')
-  ).length;
-  const commercialCount = properties.filter(
-    (p) =>
-      p.type.toLowerCase().includes('commercial') ||
-      p.type.toLowerCase().includes('plaza') ||
-      p.type.toLowerCase().includes('shop')
-  ).length;
+  const plotCount = properties.filter((p) => (p.type || '').toLowerCase().includes('plot')).length;
+  const houseCount = properties.filter((p) => {
+    const t = (p.type || '').toLowerCase();
+    return t.includes('house') || t.includes('home');
+  }).length;
+  const commercialCount = properties.filter((p) => {
+    const t = (p.type || '').toLowerCase();
+    return t.includes('commercial') || t.includes('plaza');
+  }).length;
 
   const roiValue = roiPrice * Math.pow(1 + roiGrowth / 100, roiYears);
   const savedItems = properties.filter((p) => savedIds.includes(p.id));
 
   return (
     <div className="space-y-6">
-      {/* Live Market Rates Marquee Ticker */}
+      {/* Live Market Ticker */}
       <div className="overflow-hidden rounded-xl border border-cyan/30 bg-[#040810] py-2 px-4 shadow-cyan-glow">
         <div className="flex items-center gap-3 whitespace-nowrap text-xs">
           <span className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase text-amber-400 shrink-0">
@@ -266,7 +248,7 @@ function SocietyDirectory() {
           <div className="flex items-center gap-6 font-mono text-[11px] text-platinum/80 animate-pulse">
             <span>• LDA Avenue 1 (10 Marla): <strong className="text-cyan">1.45 Cr – 1.85 Cr</strong></span>
             <span>• LDA Avenue 1 (1 Kanal): <strong className="text-cyan">2.80 Cr – 3.50 Cr</strong></span>
-            <span>• DHA Rahbar Phase 11 (5 Marla): <strong className="text-cyan">1.10 Cr – 1.35 Cr</strong></span>
+            <span>• Etihad Town (5 Marla): <strong className="text-cyan">95 Lac – 1.30 Cr</strong></span>
             <span>• DHA Phase 9 Prism (1 Kanal): <strong className="text-cyan">2.60 Cr – 3.40 Cr</strong></span>
             <span>• Jubilee Town (5 Marla): <strong className="text-cyan">85 Lac – 1.15 Cr</strong></span>
             <span>• Izmir Town (10 Marla House): <strong className="text-cyan">3.20 Cr – 4.10 Cr</strong></span>
@@ -274,7 +256,7 @@ function SocietyDirectory() {
         </div>
       </div>
 
-      {/* Hero Header & Verified Inventory Counters */}
+      {/* Hero Header & Counters */}
       <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="space-y-1.5 max-w-2xl">
           <div className="flex items-center gap-2">
@@ -290,11 +272,11 @@ function SocietyDirectory() {
             Find Verified Properties Across 38 Lahore Housing Societies
           </h2>
           <p className="text-xs text-platinum/70 leading-relaxed">
-            Direct authenticated deals across LDA Avenue 1, Jubilee Town, DHA Phases 1 to 9 &amp; Rahbar, Bahria Town, Izmir, and Lake City. Zero hidden charges, 100% legal verification supervised by <strong>CEO {CEO_NAME}</strong>.
+            Direct authenticated deals across LDA Avenue 1, Etihad Town, Jubilee Town, DHA Phases 1 to 9, Bahria Town, Izmir, and Lake City. Zero hidden charges, 100% legal NDC verification supervised by <strong>CEO {CEO_NAME}</strong>.
           </p>
         </div>
 
-        {/* Live Inventory Counters */}
+        {/* Live Counters */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto">
           <div className="rounded-xl border border-cyan/20 bg-obsidian/80 p-3 text-center min-w-[90px]">
             <span className="block font-display text-xl font-black text-cyan">
@@ -317,21 +299,18 @@ function SocietyDirectory() {
         </div>
       </div>
 
-      {/* 38 Societies Master Selection Console */}
+      {/* 38 Societies Selection Console */}
       <div className="glass rounded-xl p-4 border border-cyan/20 space-y-3">
-        
-        {/* Society Dropdown & Scrollable Bar Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs font-bold text-cyan">
-              Select Housing Society (38 Master Societies):
+              Select Housing Society:
             </span>
             <span className="chip border-cyan/30 text-cyan text-[10px] font-mono">
               {selectedSociety}
             </span>
           </div>
 
-          {/* Quick Dropdown for Direct Selection */}
           <select
             value={selectedSociety}
             onChange={(e) => setSelectedSociety(e.target.value)}
@@ -345,7 +324,7 @@ function SocietyDirectory() {
           </select>
         </div>
 
-        {/* Scrollable Quick Jump Pills for all 38 Societies */}
+        {/* Scrollable Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-cyan/30">
           {ALL_38_SOCIETIES.map((soc) => (
             <button
@@ -363,7 +342,7 @@ function SocietyDirectory() {
           ))}
         </div>
 
-        {/* Category Buttons & Live Search Input */}
+        {/* Category & Search */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-cyan/10">
           <div className="flex items-center gap-1 bg-obsidian/80 p-1 rounded-lg border border-cyan/20 w-full sm:w-auto">
             {(['all', 'plot', 'house', 'commercial'] as const).map((cat) => (
@@ -395,7 +374,7 @@ function SocietyDirectory() {
         </div>
       </div>
 
-      {/* Properties Showcase Grid */}
+      {/* Properties Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filtered.length === 0 ? (
           <div className="col-span-full rounded-2xl border border-cyan/20 bg-obsidian/60 py-12 text-center text-platinum/60 space-y-2">
@@ -412,7 +391,6 @@ function SocietyDirectory() {
                 className="group glass rounded-2xl border border-cyan/15 hover:border-cyan/40 overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-lg hover:shadow-cyan-glow"
               >
                 <div>
-                  {/* Image Banner & Tags */}
                   <div className="relative h-48 w-full bg-obsidian overflow-hidden">
                     <img
                       src={item.img}
@@ -435,7 +413,6 @@ function SocietyDirectory() {
                           ? 'border-rose-500 bg-rose-500/20 text-rose-400'
                           : 'border-cyan/20 bg-obsidian/80 text-platinum/60 hover:text-rose-400'
                       }`}
-                      title={isSaved ? 'Remove Bookmark' : 'Save to Dream Properties'}
                     >
                       <Heart className={`h-4 w-4 ${isSaved ? 'fill-rose-500 text-rose-500' : ''}`} />
                     </button>
@@ -444,7 +421,6 @@ function SocietyDirectory() {
                     </span>
                   </div>
 
-                  {/* Content */}
                   <div className="p-4 space-y-2">
                     <h3 className="font-display text-sm font-bold text-platinum group-hover:text-cyan transition line-clamp-1">
                       {item.title}
@@ -455,7 +431,6 @@ function SocietyDirectory() {
                   </div>
                 </div>
 
-                {/* Price & Action Footer */}
                 <div className="p-4 pt-0">
                   <div className="pt-3 border-t border-cyan/10 flex items-center justify-between mb-3">
                     <div>
@@ -473,7 +448,7 @@ function SocietyDirectory() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <a
-                      href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I am interested in this listing on BUNYAD: "${item.title}" in ${item.society} (Demand: ${item.price}). Please share plot number & NDC documents.`)}
+                      href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I am interested in this listing on BUNYAD: "${item.title}" in ${item.society} (Demand: ${item.price}). Please share details.`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-cyan flex items-center justify-center gap-1.5 py-2 text-xs font-bold"
@@ -496,7 +471,7 @@ function SocietyDirectory() {
         )}
       </div>
 
-      {/* Real Estate Investment ROI Calculator */}
+      {/* ROI Calculator */}
       <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow space-y-4">
         <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
           <div className="p-2 rounded-lg bg-cyan/10 text-cyan border border-cyan/30">
@@ -550,7 +525,7 @@ function SocietyDirectory() {
             </p>
           </div>
           <a
-            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I calculated an investment ROI on BUNYAD: Purchase PKR ${roiPrice.toLocaleString()} growing to PKR ${Math.round(roiValue).toLocaleString()} in ${roiYears} years. What are the best plots currently available for this budget?`)}
+            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I calculated an investment ROI on BUNYAD: Purchase PKR ${roiPrice.toLocaleString()} growing to PKR ${Math.round(roiValue).toLocaleString()} in ${roiYears} years.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-cyan py-2.5 px-4 text-xs font-bold flex items-center gap-1.5"
@@ -560,7 +535,7 @@ function SocietyDirectory() {
         </div>
       </div>
 
-      {/* Bookmarked / Saved Dream Properties */}
+      {/* Saved Properties */}
       {savedItems.length > 0 && (
         <div className="glass rounded-xl p-5 border border-cyan/20 space-y-3">
           <div className="flex items-center justify-between border-b border-cyan/15 pb-2">
@@ -594,7 +569,7 @@ function SocietyDirectory() {
         </div>
       )}
 
-      {/* Property Detail Modal */}
+      {/* Detail Modal */}
       {detailModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-md p-4">
           <div className="glass-strong w-full max-w-lg rounded-2xl border border-cyan/40 p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
