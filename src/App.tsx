@@ -75,7 +75,12 @@ export default function App() {
 
       <Ticker rates={rates} />
 
-      <HudShell onReplay={handleReplayIntro} active={active} onNav={setActive}>
+      <HudShell 
+        onReplay={handleReplayIntro} 
+        active={active} 
+        onNav={setActive}
+        onOpenModal={(m) => setActiveModal(m)}
+      >
         {/* Command Deck / Home */}
         <section id="home" className="scroll-mt-24">
           <Overview materialCount={4} onOpenAI={openAI} />
@@ -178,8 +183,10 @@ export default function App() {
         </footer>
       </HudShell>
 
-      {/* Dynamic Popups for About, Terms & Add Property */}
-      <PortalModules activeModule={activeModal} onClose={() => setActiveModal(null)} />
+      {/* Single Controlled Modal */}
+      {activeModal && (
+        <PortalModules activeModule={activeModal} onClose={() => setActiveModal(null)} />
+      )}
 
       <AIWidget />
     </div>
