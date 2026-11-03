@@ -183,12 +183,13 @@ export default function HudShell({ children, active, onNav, onReplay, onOpenModa
         {children}
       </main>
 
-      {/* Floating "Back to Home" Button */}
+      {/* FLOATING "BACK TO HOME" BUTTON - Shifted to BOTTOM-LEFT to avoid Gemini AI Button overlap */}
       {showBackToHome && (
         <button
           type="button"
           onClick={handleGoHome}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-cyan/50 bg-obsidian/95 px-4 py-2.5 text-xs font-mono font-bold text-cyan shadow-cyan-glow backdrop-blur-md transition-all hover:bg-cyan hover:text-obsidian hover:scale-105 cursor-pointer"
+          className="fixed bottom-6 left-6 z-40 flex items-center gap-2 rounded-full border border-cyan/50 bg-obsidian/95 px-4 py-2.5 text-xs font-mono font-bold text-cyan shadow-cyan-glow backdrop-blur-md transition-all hover:bg-cyan hover:text-obsidian hover:scale-105 cursor-pointer"
+          title="Return to Home Screen"
         >
           <ArrowUp className="h-4 w-4 animate-bounce" />
           <span>Back to Home</span>
