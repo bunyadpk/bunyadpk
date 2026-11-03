@@ -20,6 +20,7 @@ interface PropertyItem {
 const ALL_38_SOCIETIES = [
   'All',
   'LDA Avenue 1',
+  'Etihad Town',
   'Jubilee Town',
   'DHA Phase 1',
   'DHA Phase 2',
@@ -47,7 +48,6 @@ const ALL_38_SOCIETIES = [
   'Park View City',
   'Al-Kabir Town',
   'Kings Town',
-  'Etihad Town',
   'Central Park Housing Scheme',
   'LDA City',
   'Midland Farmhouses',
@@ -59,7 +59,7 @@ const ALL_38_SOCIETIES = [
   'Architects & Engineers Society'
 ];
 
-const FALLBACK_PROPERTIES: PropertyItem[] = [
+const INITIAL_PROPERTIES: PropertyItem[] = [
   {
     id: 101,
     title: '10 Marla Prime Residential Plot - Block J',
@@ -67,63 +67,63 @@ const FALLBACK_PROPERTIES: PropertyItem[] = [
     society: 'LDA Avenue 1',
     price: 'PKR 17,500,000',
     phone: CEO_PHONE,
-    desc: 'Direct possession plot on 50ft wide road near Commercial Broadway. Ready for immediate construction.',
+    desc: 'Direct possession plot on 50ft road near Commercial Broadway. Ready for construction with verified NDC.',
     img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 102,
-    title: '1 Kanal Luxury Turnkey Designer House',
-    type: 'House',
-    society: 'LDA Avenue 1',
-    price: 'PKR 48,000,000',
+    title: '5 Marla Hot Location Plot - Phase 1 Block A',
+    type: 'Plot',
+    society: 'Etihad Town',
+    price: 'PKR 11,500,000',
     phone: CEO_PHONE,
-    desc: 'Brand new 5-bed modern villa with double height lobby, Spanish tiles, and servant quarter.',
-    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
+    desc: 'Prime location plot near main entrance and community club. 100% on-ground with LDA approval.',
+    img: 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 103,
+    title: '1 Kanal Prime Residential Plot - Sector Q',
+    type: 'Plot',
+    society: 'DHA Phase 9 Prism',
+    price: 'PKR 28,500,000',
+    phone: CEO_PHONE,
+    desc: 'Direct allocation plot in DHA Prism. Ideal for high capital appreciation.',
+    img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 104,
+    title: '10 Marla Brand New Modern House - Sector C',
+    type: 'House',
+    society: 'Bahria Town Lahore',
+    price: 'PKR 37,500,000',
+    phone: CEO_PHONE,
+    desc: 'Luxurious 5-bed designer villa with imported fittings, double-glazed windows, and servant quarter.',
+    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 105,
     title: '5 Marla Fully Developed Plot - Sector B',
     type: 'Plot',
     society: 'Jubilee Town',
     price: 'PKR 10,500,000',
     phone: CEO_PHONE,
-    desc: 'Park face location, all dues clear with official NDC.',
+    desc: 'Park face location, all dues cleared with official NDC. Ready for immediate construction.',
     img: 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 104,
-    title: '4 Marla Commercial Plaza (GF + 3 Floors)',
-    type: 'Commercial',
-    society: 'LDA Avenue 1',
-    price: 'PKR 35,000,000',
-    phone: CEO_PHONE,
-    desc: 'Main boulevard commercial building with confirmed corporate rental yield.',
-    img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 105,
-    title: '1 Kanal Prime Residential Plot - Phase 11 Rahbar',
-    type: 'Plot',
-    society: 'DHA Rahbar Phase 11',
-    price: 'PKR 32,000,000',
-    phone: CEO_PHONE,
-    desc: 'Hot location plot near Ring Road interchange. Direct allocation.',
-    img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
-  },
-  {
     id: 106,
-    title: '10 Marla Brand New Spanish Villa',
+    title: '10 Marla Solid Construction Spanish Villa',
     type: 'House',
     society: 'Izmir Town',
     price: 'PKR 38,500,000',
     phone: CEO_PHONE,
-    desc: 'Solid construction with Grade-60 steel, solid ash wood doors, and imported fittings.',
+    desc: 'Solid engineering with Grade-60 steel, solid ash wood doors, and modern architecture.',
     img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
   }
 ];
 
 function SocietyDirectory() {
-  const [properties, setProperties] = useState<PropertyItem[]>(FALLBACK_PROPERTIES);
+  const [properties, setProperties] = useState<PropertyItem[]>(INITIAL_PROPERTIES);
   const [loading, setLoading] = useState(false);
   const [selectedSociety, setSelectedSociety] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'plot' | 'house' | 'commercial'>('all');
@@ -141,7 +141,7 @@ function SocietyDirectory() {
   const [roiGrowth, setRoiGrowth] = useState(12);
   const [roiYears, setRoiYears] = useState(3);
 
-  async function loadData() {
+  async function syncDatabaseProperties() {
     if (!isSupabaseConfigured || !supabase) return;
     setLoading(true);
     try {
@@ -156,8 +156,8 @@ function SocietyDirectory() {
       }
 
       if (data && data.length > 0) {
-        const mapped: PropertyItem[] = data.map((item: any, idx: number) => ({
-          id: item.id || `prop-${idx}`,
+        const dbItems: PropertyItem[] = data.map((item: any, idx: number) => ({
+          id: item.id || `db-${idx}`,
           title: item.title || 'Verified Property',
           type: item.type || 'Plot',
           society: item.society || 'Lahore',
@@ -166,17 +166,26 @@ function SocietyDirectory() {
           desc: item.desc || 'Direct verified listing on BUNYAD portal.',
           img: item.img || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
         }));
-        setProperties(mapped);
+
+        setProperties((prev) => {
+          const combined = [...dbItems];
+          INITIAL_PROPERTIES.forEach((init) => {
+            if (!combined.some((c) => c.title.toLowerCase() === init.title.toLowerCase())) {
+              combined.push(init);
+            }
+          });
+          return combined;
+        });
       }
     } catch (err) {
-      console.warn('Fetch error:', err);
+      console.warn('Sync issue:', err);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadData();
+    syncDatabaseProperties();
   }, []);
 
   function toggleSaveProperty(id: string | number) {
@@ -187,21 +196,19 @@ function SocietyDirectory() {
     localStorage.setItem('bunyad_saved_properties', JSON.stringify(updated));
   }
 
-  // Smart Fuzzy Filter
   const filtered = useMemo(() => {
     return properties.filter((item) => {
-      const socName = (item.society || '').toLowerCase();
+      const itemSoc = (item.society || '').toLowerCase();
       const targetSoc = selectedSociety.toLowerCase();
 
-      // Smart match: chahe 'Etihad Town' ho ya 'Etihad Town, Lahore'
       const matchSoc =
         selectedSociety === 'All' ||
-        socName.includes(targetSoc) ||
-        targetSoc.includes(socName) ||
-        (targetSoc.includes('etihad') && socName.includes('etihad')) ||
-        (targetSoc.includes('dha') && socName.includes('dha')) ||
-        (targetSoc.includes('bahria') && socName.includes('bahria')) ||
-        (targetSoc.includes('lda') && socName.includes('lda'));
+        itemSoc.includes(targetSoc) ||
+        targetSoc.includes(itemSoc) ||
+        (targetSoc.includes('etihad') && itemSoc.includes('etihad')) ||
+        (targetSoc.includes('dha') && itemSoc.includes('dha')) ||
+        (targetSoc.includes('bahria') && itemSoc.includes('bahria')) ||
+        (targetSoc.includes('lda') && itemSoc.includes('lda'));
 
       const itemType = (item.type || '').toLowerCase();
       const matchCat =
@@ -214,7 +221,7 @@ function SocietyDirectory() {
       const matchQuery =
         !q ||
         (item.title || '').toLowerCase().includes(q) ||
-        socName.includes(q) ||
+        itemSoc.includes(q) ||
         (item.desc || '').toLowerCase().includes(q) ||
         (item.price || '').toLowerCase().includes(q);
 
@@ -238,7 +245,7 @@ function SocietyDirectory() {
 
   return (
     <div className="space-y-6">
-      {/* Live Market Ticker */}
+      {/* Live Market Rates Ticker */}
       <div className="overflow-hidden rounded-xl border border-cyan/30 bg-[#040810] py-2 px-4 shadow-cyan-glow">
         <div className="flex items-center gap-3 whitespace-nowrap text-xs">
           <span className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase text-amber-400 shrink-0">
@@ -247,16 +254,15 @@ function SocietyDirectory() {
           </span>
           <div className="flex items-center gap-6 font-mono text-[11px] text-platinum/80 animate-pulse">
             <span>• LDA Avenue 1 (10 Marla): <strong className="text-cyan">1.45 Cr – 1.85 Cr</strong></span>
-            <span>• LDA Avenue 1 (1 Kanal): <strong className="text-cyan">2.80 Cr – 3.50 Cr</strong></span>
-            <span>• Etihad Town (5 Marla): <strong className="text-cyan">95 Lac – 1.30 Cr</strong></span>
+            <span>• Etihad Town (5 Marla): <strong className="text-cyan">95 Lac – 1.25 Cr</strong></span>
             <span>• DHA Phase 9 Prism (1 Kanal): <strong className="text-cyan">2.60 Cr – 3.40 Cr</strong></span>
+            <span>• Bahria Town (10 Marla House): <strong className="text-cyan">3.40 Cr – 4.20 Cr</strong></span>
             <span>• Jubilee Town (5 Marla): <strong className="text-cyan">85 Lac – 1.15 Cr</strong></span>
-            <span>• Izmir Town (10 Marla House): <strong className="text-cyan">3.20 Cr – 4.10 Cr</strong></span>
           </div>
         </div>
       </div>
 
-      {/* Hero Header & Counters */}
+      {/* Hero Header & Live Counters */}
       <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="space-y-1.5 max-w-2xl">
           <div className="flex items-center gap-2">
@@ -272,11 +278,10 @@ function SocietyDirectory() {
             Find Verified Properties Across 38 Lahore Housing Societies
           </h2>
           <p className="text-xs text-platinum/70 leading-relaxed">
-            Direct authenticated deals across LDA Avenue 1, Etihad Town, Jubilee Town, DHA Phases 1 to 9, Bahria Town, Izmir, and Lake City. Zero hidden charges, 100% legal NDC verification supervised by <strong>CEO {CEO_NAME}</strong>.
+            Direct authenticated deals across LDA Avenue 1, Etihad Town, Jubilee Town, DHA Phases, Bahria Town, and Izmir Town. Supervised by <strong>CEO {CEO_NAME}</strong>.
           </p>
         </div>
 
-        {/* Live Counters */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto">
           <div className="rounded-xl border border-cyan/20 bg-obsidian/80 p-3 text-center min-w-[90px]">
             <span className="block font-display text-xl font-black text-cyan">
