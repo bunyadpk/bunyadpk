@@ -28,7 +28,8 @@ const BLOCK_REGISTRY: Record<string, BlockCoord> = {
 
 const BLOCKS_LIST = Object.keys(BLOCK_REGISTRY);
 
-const OFFICIAL_MASTER_MAP_URL = 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=2400&q=95';
+// GitHub Pages base URL ke mutabiq exact asset path
+const MAP_IMAGE_SRC = `${import.meta.env.BASE_URL}assets/lda-map.png`;
 
 function MasterMaps() {
   const [selectedBlock, setSelectedBlock] = useState('J');
@@ -37,6 +38,7 @@ function MasterMaps() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [imgError, setImgError] = useState(false);
   const [pin, setPin] = useState<{ x: number; y: number; label: string }>({
     x: BLOCK_REGISTRY['J'].x,
     y: BLOCK_REGISTRY['J'].y,
@@ -65,7 +67,7 @@ function MasterMaps() {
   function handleWheel(e: React.WheelEvent) {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 0.2 : -0.2;
-    setScale((prev) => Math.min(4, Math.max(0.8, prev + zoomFactor)));
+    setScale((prev) => Math.min(5, Math.max(0.6, prev + zoomFactor)));
   }
 
   function handleSelectBlock(key: string) {
@@ -145,7 +147,7 @@ function MasterMaps() {
                 Official Society Master Layout Plan &amp; Radar Navigator
               </h2>
               <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
-                OFFICIAL TOWN MAP
+                LDA AVENUE 1 OFFICIAL MAP
               </span>
             </div>
             <p className="font-mono text-[11px] text-cyan/70 tracking-wider">
@@ -156,10 +158,10 @@ function MasterMaps() {
 
         <div className="flex items-center gap-2">
           <a
-            href={OFFICIAL_MASTER_MAP_URL}
+            href={MAP_IMAGE_SRC}
             target="_blank"
             rel="noopener noreferrer"
-            download="Official_Master_Plan.jpg"
+            download="LDA_Avenue_1_Official_Master_Map.png"
             className="btn-ghost py-2 px-3 text-xs flex items-center gap-1.5 border border-cyan/30 text-cyan hover:bg-cyan/15 rounded-xl cursor-pointer"
           >
             <Download className="h-4 w-4" /> Download HD Map
@@ -250,7 +252,7 @@ function MasterMaps() {
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-1.5 rounded-xl border border-cyan/30 bg-obsidian/90 p-1.5 backdrop-blur-md shadow-lg">
           <button
             type="button"
-            onClick={() => setScale((s) => Math.min(4, s + 0.3))}
+            onClick={() => setScale((s) => Math.min(5, s + 0.3))}
             className="rounded-lg p-2 text-cyan hover:bg-cyan/20 cursor-pointer"
             title="Zoom In"
           >
@@ -258,7 +260,7 @@ function MasterMaps() {
           </button>
           <button
             type="button"
-            onClick={() => setScale((s) => Math.max(0.8, s - 0.3))}
+            onClick={() => setScale((s) => Math.max(0.6, s - 0.3))}
             className="rounded-lg p-2 text-cyan hover:bg-cyan/20 cursor-pointer"
             title="Zoom Out"
           >
@@ -282,11 +284,19 @@ function MasterMaps() {
           }}
           className="relative w-full h-full flex items-center justify-center"
         >
+          {/* Real uploaded LDA Map file with fallback paths */}
           <img
-            src={OFFICIAL_MASTER_MAP_URL}
-            alt="Official Town Master Map"
+            src={MAP_IMAGE_SRC}
+            alt="LDA Avenue 1 Official Master Map"
             className="w-full h-full object-contain pointer-events-none"
             draggable={false}
+            onError={(e) => {
+              if (!imgError) {
+                setImgError(true);
+                // agar base url issue ho toh direct absolute path try karein
+                (e.target as HTMLImageElement).src = '/bunyadpk/assets/lda-map.png';
+              }
+            }}
           />
 
           <div className="absolute inset-0 bg-[radial-gradient(#00f0ff_1px,transparent_1px)] [background-size:32px_32px] opacity-15 pointer-events-none" />
