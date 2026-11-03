@@ -1,19 +1,17 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import {
   Building2,
   Compass,
   FileText,
   Layers,
   MapPin,
-  ShieldAlert,
-  Sparkles,
-  Phone,
-  RotateCcw,
   Briefcase,
   PlusCircle,
-  Info
+  Info,
+  Phone,
+  ArrowUp
 } from 'lucide-react';
-import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
+import { CEO_PHONE, CEO_NAME } from '@/lib/constants';
 import PortalModules from '@/components/PortalModules';
 
 export type NavId =
@@ -34,6 +32,25 @@ interface HudShellProps {
 
 export default function HudShell({ children, active, onNav, onReplay }: HudShellProps) {
   const [activeModal, setActiveModal] = useState<'about' | 'terms' | 'add-property' | null>(null);
+  const [showBackToHome, setShowBackToHome] = useState(false);
+
+  // Jab user scroll kare toh floating "Back to Home" button show karein
+  useEffect(() => {
+    function handleScroll() {
+      if (window.scrollY > 300) {
+        setShowBackToHome(true);
+      } else {
+        setShowBackToHome(false);
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  function handleGoHome() {
+    onNav('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   const navItems: { id: NavId; label: string; icon: any }[] = [
     { id: 'home', label: 'Command', icon: Building2 },
@@ -50,12 +67,13 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
       <header className="sticky top-0 z-40 border-b border-cyan/20 bg-obsidian/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:px-6">
           
-          {/* Brand Logo & Name */}
+          {/* Brand Logo & Name - Clicks back to Home */}
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => onNav('home')}
+              onClick={handleGoHome}
               className="group flex items-center gap-2 text-left cursor-pointer"
+              title="Return to Home (Command)"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan/40 bg-cyan/10 shadow-cyan-glow group-hover:scale-105 transition">
                 <Building2 className="h-5 w-5 text-cyan" />
@@ -81,7 +99,12 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => onNav(item.id)}
+                  onClick={() => {
+                    onNav(item.id);
+                    if (item.id === 'home') {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
                   className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs transition cursor-pointer ${
                     isActive
                       ? 'border border-cyan/40 bg-cyan/15 text-cyan shadow-cyan-glow font-bold'
@@ -95,7 +118,7 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
             })}
           </nav>
 
-          {/* Quick Action Buttons (Add Property, About, Terms) */}
+          {/* Quick Action Buttons */}
           <div className="flex items-center gap-1.5">
             <button
               type="button"
@@ -144,7 +167,12 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
             <button
               key={item.id}
               type="button"
-              onClick={() => onNav(item.id)}
+              onClick={() => {
+                onNav(item.id);
+                if (item.id === 'home') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
               className={`whitespace-nowrap px-2.5 py-1 font-mono text-[11px] rounded-md transition ${
                 active === item.id
                   ? 'bg-cyan/20 text-cyan border border-cyan/30 font-bold'
@@ -161,6 +189,19 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {children}
       </main>
+
+      {/* FLOATING "BACK TO HOME" BUTTON (Visible everywhere upon scrolling) */}
+      {showBackToHome && (
+        <button
+          type="button"
+          onClick={handleGoHome}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-cyan/50 bg-obsidian/90 px-4 py-2.5 text-xs font-mono font-bold text-cyan shadow-cyan-glow backdrop-blur-md transition-all hover:bg-cyan hover:text-obsidian hover:scale-105 cursor-pointer"
+          title="Return to Home Screen"
+        >
+          <ArrowUp className="h-4 w-4 animate-bounce" />
+          <span>Back to Home</span>
+        </button>
+      )}
 
       {/* Dynamic Popups for About, Terms & Add Property */}
       <PortalModules activeModule={activeModal} onClose={() => setActiveModal(null)} />
