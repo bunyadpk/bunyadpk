@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from '@/lib/motion';
 import {
-  Phone, RotateCw, Menu, X, LayoutGrid, Map, Calculator, Briefcase, Shield, Home,
+  Phone, RotateCw, Menu, X, LayoutGrid, Map, Calculator, Briefcase, Home,
 } from 'lucide-react';
-import { CEO_NAME, CEO_PHONE, waLink } from '@/lib/constants';
+import { CEO_NAME, waLink } from '@/lib/constants';
 
 export type NavId = 'home' | 'directory' | 'services' | 'suite' | 'lda-docs' | 'master-maps' | 'admin';
 
@@ -16,7 +16,6 @@ const NAV: NavItem[] = [
   { id: 'suite', label: 'Valuation', icon: Calculator },
   { id: 'lda-docs', label: 'LDA Docs', icon: LayoutGrid },
   { id: 'master-maps', label: 'Master Maps', icon: Map },
-  { id: 'admin', label: 'CEO Desk', icon: Shield },
 ];
 
 const HEADER_OFFSET = 90;
@@ -85,7 +84,7 @@ export default function HudShell({
             </div>
           </div>
 
-          {/* Desktop & Laptop Navigation */}
+          {/* Desktop Navigation (Public Only) */}
           <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
             {NAV.map((item) => (
               <button
@@ -182,7 +181,7 @@ export default function HudShell({
       <main className="relative z-10 mx-auto max-w-[1400px] px-4 py-6">{children}</main>
       <footer className="relative z-10 mt-8 border-t border-cyan/15 px-4 py-6 text-center">
         <p className="font-mono text-[11px] text-cyan/50">
-          BUNYAD.PK · CEO {CEO_NAME} (طہٰ مبین بھٹہ) · {CEO_PHONE} · Block J, LDA Avenue 1, Lahore
+          BUNYAD.PK · CEO {CEO_NAME} (طہٰ مبین بھٹہ) · Block J, LDA Avenue 1, Lahore
         </p>
         <p className="mt-1 font-mono text-[10px] text-platinum/40">
           © 2026 Bin Taha Associates &amp; Builders · All rights reserved
