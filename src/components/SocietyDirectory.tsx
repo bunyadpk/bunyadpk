@@ -141,41 +141,53 @@ function SocietyDirectory() {
   const [roiGrowth, setRoiGrowth] = useState(12);
   const [roiYears, setRoiYears] = useState(3);
 
+  // Saari 3350+ listings batch me fetch karne ka function
   async function syncDatabaseProperties() {
     if (!isSupabaseConfigured || !supabase) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .order('id', { ascending: false });
+      let allFetchedRows: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      if (error) {
-        console.error('Supabase fetch error:', error);
-        return;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .order('id', { ascending: false })
+          .range(from, from + pageSize - 1);
+
+        if (error) {
+          console.error('Supabase batch fetch error:', error);
+          break;
+        }
+
+        if (data && data.length > 0) {
+          allFetchedRows = allFetchedRows.concat(data);
+          if (data.length < pageSize) {
+            hasMore = false;
+          } else {
+            from += pageSize;
+          }
+        } else {
+          hasMore = false;
+        }
       }
 
-      if (data && data.length > 0) {
-        const dbItems: PropertyItem[] = data.map((item: any, idx: number) => ({
+      if (allFetchedRows.length > 0) {
+        const dbItems: PropertyItem[] = allFetchedRows.map((item: any, idx: number) => ({
           id: item.id || `db-${idx}`,
-          title: item.title || 'Verified Property',
-          type: item.type || 'Plot',
-          society: item.society || 'Lahore',
+          title: item.title || item.Title || 'Verified Property',
+          type: item.type || item.Type || 'Plot',
+          society: item.society || item.Society || 'Lahore',
           price: item.price ? (String(item.price).startsWith('PKR') ? item.price : `PKR ${item.price}`) : 'Demand on Call',
-          phone: item.phone || CEO_PHONE,
-          desc: item.desc || 'Direct verified listing on BUNYAD portal.',
-          img: item.img || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+          phone: item.phone || item.Phone || CEO_PHONE,
+          desc: item.desc || item.Description || 'Direct verified listing on BUNYAD portal.',
+          img: item.img || item.Image || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
         }));
 
-        setProperties((prev) => {
-          const combined = [...dbItems];
-          INITIAL_PROPERTIES.forEach((init) => {
-            if (!combined.some((c) => c.title.toLowerCase() === init.title.toLowerCase())) {
-              combined.push(init);
-            }
-          });
-          return combined;
-        });
+        setProperties(dbItems);
       }
     } catch (err) {
       console.warn('Sync issue:', err);
@@ -388,7 +400,7 @@ function SocietyDirectory() {
             <p className="text-xs text-platinum/50">Click "Add Property" in header to post a direct listing in this society.</p>
           </div>
         ) : (
-          filtered.map((item) => {
+          filtered.slice(0, 100).map((item) => {
             const isSaved = savedIds.includes(item.id);
             return (
               <div
