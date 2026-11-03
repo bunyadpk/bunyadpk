@@ -42,7 +42,7 @@ export default function AgentPortal() {
   const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>([
     {
       sender: 'ai',
-      text: `Asalam-o-Alaikum! Main Bin Taha Associates ka Autonomous Engineering AI Agent hoon. Main CEO Taha Mubeen Bhutta ke direct supervision mein aapko plot verification, LDA bylaws, construction cost, ya turnkey booking mein live guide karne ke liye tayyar hoon. Aap kis cheez ke bare mein janna chahte hain?`,
+      text: `Asalam-o-Alaikum! Main BUNYAD.PK ka Autonomous Engineering AI Agent hoon. Main CEO Taha Mubeen Bhutta ke direct supervision mein aapko plot verification, LDA bylaws, construction cost, ya turnkey booking mein live guide karne ke liye tayyar hoon. Aap kis cheez ke bare mein janna chahte hain?`,
       time: 'Just now'
     }
   ]);
@@ -118,9 +118,9 @@ export default function AgentPortal() {
     setAiTyping(true);
 
     const prompt = `
-You are the Official Live Autonomous AI Engineer for Bin Taha Associates & Builders (Led by CEO Taha Mubeen Bhutta), operating from Block J, Commercial Broadway, LDA Avenue 1, Lahore.
+You are the Official Live Autonomous AI Engineer for BUNYAD.PK (Led by CEO Taha Mubeen Bhutta), operating from Block J, Commercial Broadway, LDA Avenue 1, Lahore.
 The user is asking: "${userText}".
-Provide a helpful, professional, authoritative response covering Lahore real estate, civil engineering, LDA bylaws, or current market rates. Keep your tone respectful, clear, and proactive. Mention CEO Taha Mubeen Bhutta (0321-9404812) for site booking if appropriate.
+Provide a helpful, professional, authoritative response covering Lahore real estate, civil engineering, LDA bylaws, or current market rates. Keep your tone respectful, clear, and proactive. Mention CEO Taha Mubeen Bhutta (0321-9404812) for site booking if appropriate. Always identify the platform as BUNYAD (بنیاد).
 `;
 
     try {
@@ -130,7 +130,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
       speakText(reply);
     } catch {
       setAiTyping(false);
-      const fallback = `Aapki request receive ho gayi hai. Bin Taha Associates ke CEO Taha Mubeen Bhutta direct helpline 0321-9404812 par available hain ya turnkey service book kar sakte hain.`;
+      const fallback = `Aapki request receive ho gayi hai. BUNYAD portal ke CEO Taha Mubeen Bhutta direct helpline 0321-9404812 par available hain ya turnkey service book kar sakte hain.`;
       setMessages((prev) => [...prev, { sender: 'ai', text: fallback, time: timeNow }]);
       speakText(fallback);
     }
@@ -165,7 +165,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
     // Title
     ctx.fillStyle = '#fcd34d';
     ctx.font = 'bold 13px monospace';
-    ctx.fillText('BIN TAHA ASSOCIATES & BUILDERS • INTERACTIVE ARCHITECTURAL CAD STUDIO', 80, 32);
+    ctx.fillText('BUNYAD.PK (بنیاد) • INTERACTIVE ARCHITECTURAL CAD STUDIO', 80, 32);
 
     const totalArea = cadWidth * cadLength;
     const estCost = totalArea * (cadStoreys === 1 ? 3200 : 4200);
@@ -222,7 +222,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
     if (!canvas) return;
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/jpeg', 1.0);
-    link.download = `Bin_Taha_CAD_Blueprint_${cadWidth}x${cadLength}.jpg`;
+    link.download = `BUNYAD_CAD_Blueprint_${cadWidth}x${cadLength}.jpg`;
     link.click();
   }
 
@@ -242,7 +242,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
         full_name: bookingForm.name,
         phone: bookingForm.phone,
         society_interest: bookingForm.location,
-        message: `Direct Service Booking: [${serviceName}]. Notes: ${bookingForm.notes || 'None'}`,
+        message: `BUNYAD Direct Service Booking: [${serviceName}]. Notes: ${bookingForm.notes || 'None'}`,
         status: 'New'
       });
     }
@@ -263,18 +263,18 @@ Provide a helpful, professional, authoritative response covering Lahore real est
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
-              LIVE AUTONOMOUS AI &amp; CIVIL GRID
+              BUNYAD PROPTECH PORTAL (بنیاد)
             </span>
             <span className="font-mono text-[10px] text-cyan/70">
-              BIN TAHA ASSOCIATES VIP COMMAND
+              AUTONOMOUS AI &amp; CIVIL GRID
             </span>
           </div>
           <h2 className="font-display text-xl sm:text-2xl font-bold text-platinum flex items-center gap-2">
             <Building2 className="h-6 w-6 text-cyan" />
-            Bin Taha PropTech Autonomous Studio &amp; AI Engineering
+            BUNYAD PropTech Autonomous Studio &amp; AI Engineering
           </h2>
           <p className="text-xs text-platinum/70 max-w-2xl leading-relaxed">
-            Live dynamic CAD rendering, real-time voice &amp; text AI consultation, optical site telemetry, and 100% verified escrow construction.
+            Live dynamic CAD rendering, real-time voice &amp; text AI consultation, optical site telemetry, and 100% verified escrow construction led by <strong>CEO {CEO_NAME}</strong>.
           </p>
         </div>
 
@@ -287,7 +287,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
             <Sparkles className="h-4 w-4" /> Book Turnkey Project
           </button>
           <a
-            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I want to discuss a construction project in Lahore.`)}
+            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I want to discuss a construction project on BUNYAD.pk.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost flex items-center gap-1.5 py-2 px-4 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/10"
@@ -300,7 +300,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
       {/* Navigation Sub-Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-cyan/15 pb-2">
         {[
-          { id: 'ai-agent', label: 'Autonomous AI Companion', icon: Bot },
+          { id: 'ai-agent', label: 'BUNYAD AI Companion', icon: Bot },
           { id: 'services', label: '15 Civil Verticals', icon: HardHat },
           { id: 'cad', label: 'Interactive 2D CAD Studio', icon: Compass },
           { id: 'cctv', label: '24/7 Optical CCTV Telemetry', icon: Video },
@@ -331,7 +331,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
               </div>
               <div>
                 <h3 className="font-display text-sm font-bold text-cyan">
-                  Bin Taha Autonomous Engineering Copilot
+                  BUNYAD Autonomous Engineering Copilot
                 </h3>
                 <p className="font-mono text-[10px] text-platinum/60">
                   REAL-TIME GEMINI ENGINE • CONVERSATIONAL VOICE &amp; TEXT
@@ -377,7 +377,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
             {aiTyping && (
               <div className="flex items-center gap-2 text-cyan font-mono text-xs p-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Autonomous Agent is analyzing engineering bylaws &amp; rates...
+                BUNYAD Agent is analyzing engineering bylaws &amp; rates...
               </div>
             )}
             <div ref={chatEndRef} />
@@ -389,7 +389,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
               '5 Marla complete grey structure cost in LDA Avenue 1?',
               'What are LDA mandatory front & rear setback rules?',
               'Grade-60 steel vs commercial grade difference?',
-              'How does Bin Taha 100% Escrow milestone protect me?'
+              'How does BUNYAD 100% Escrow milestone protect me?'
             ].map((preset, i) => (
               <button
                 key={i}
@@ -409,7 +409,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
               value={inputMsg}
               onChange={(e) => setInputMsg(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMsg()}
-              placeholder="Ask anything about construction, blueprints, LDA transfer, or DC rates..."
+              placeholder="Ask BUNYAD about construction, blueprints, LDA transfer, or DC rates..."
               className="flex-1 rounded-lg border border-cyan/30 bg-obsidian/90 px-4 py-2.5 text-xs text-platinum placeholder:text-cyan/30 outline-none focus:border-cyan"
             />
             <button
@@ -457,7 +457,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
                   Book Service
                 </button>
                 <a
-                  href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I am inquiring about [${s.title}]. Please share technical BOQ.`)}
+                  href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I am inquiring via BUNYAD about [${s.title}]. Please share technical BOQ.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 rounded-lg border border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10"
@@ -478,7 +478,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
             <div>
               <h3 className="font-display text-base font-bold text-cyan flex items-center gap-2">
                 <Compass className="h-5 w-5 text-cyan" />
-                Live Dynamic 2D CAD Layout Engine
+                BUNYAD Live Dynamic 2D CAD Layout Engine
               </h3>
               <p className="text-xs text-platinum/60">
                 Adjust sliders to dynamically redraw structural walls and compute LDA setback clearances.
@@ -572,7 +572,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
             <div>
               <h3 className="font-display text-base font-bold text-cyan flex items-center gap-2">
                 <Video className="h-5 w-5 text-cyan animate-pulse" />
-                Live 24/7 Remote CCTV Optical Site Telemetry
+                BUNYAD 24/7 Remote CCTV Optical Site Telemetry
               </h3>
               <p className="text-xs text-platinum/60">
                 Real-time optical feed streaming live construction milestones for overseas and local clients.
@@ -636,7 +636,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
                 ))}
               </div>
               <span className="font-mono text-[11px] text-platinum/60">
-                256-Bit SSL Telemetry Grid • Supervised by Bin Taha
+                256-Bit SSL Telemetry Grid • Supervised by BUNYAD.PK
               </span>
             </div>
           </div>
@@ -650,7 +650,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
             <div>
               <h3 className="font-display text-base font-bold text-cyan flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                Client Construction Portal &amp; Telemetry Vault
+                BUNYAD Client Construction Portal &amp; Telemetry Vault
               </h3>
               <p className="text-xs text-platinum/60">
                 Track live milestone percentages, certified site audits, and staged escrow fund approvals.
@@ -693,7 +693,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
             </div>
             <div className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3">
               <span className="font-mono text-[10px] text-platinum/50 uppercase">Resident Engineer</span>
-              <p className="mt-1 text-xs font-bold text-emerald-400">Engr. Hamza (Lead Civil)</p>
+              <p className="mt-1 text-xs font-bold text-emerald-400">Engr. Hamza (BUNYAD Lead)</p>
             </div>
             <div className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3">
               <span className="font-mono text-[10px] text-platinum/50 uppercase">Escrow Vault Stage</span>
@@ -729,7 +729,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
             >
               <div className="flex items-center justify-between border-b border-cyan/15 pb-3">
                 <h3 className="font-display text-sm font-bold text-cyan">
-                  Book Project: {selectedService || 'Turnkey Construction'}
+                  BUNYAD Booking: {selectedService || 'Turnkey Construction'}
                 </h3>
                 <button
                   type="button"
@@ -743,7 +743,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
               {submitSuccess ? (
                 <div className="py-8 text-center space-y-2">
                   <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-400 animate-bounce" />
-                  <h4 className="font-display text-base font-bold text-platinum">Booking Saved Successfully!</h4>
+                  <h4 className="font-display text-base font-bold text-platinum">Booking Saved on BUNYAD!</h4>
                   <p className="text-xs text-platinum/70">
                     Lead is synced with CEO Desk. Taha Mubeen Bhutta will contact you shortly.
                   </p>
@@ -802,7 +802,7 @@ Provide a helpful, professional, authoritative response covering Lahore real est
                     className="btn-cyan mt-2 w-full py-2.5 text-xs font-bold cursor-pointer flex items-center justify-center gap-2 shadow-cyan-glow"
                   >
                     <Send className="h-4 w-4" />
-                    {submitting ? 'Registering with Cloud...' : 'Confirm Consultation Booking'}
+                    {submitting ? 'Registering with BUNYAD Cloud...' : 'Confirm Consultation Booking'}
                   </button>
                 </form>
               )}
