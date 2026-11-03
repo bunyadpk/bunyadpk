@@ -5,11 +5,10 @@ import {
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
 
-// Declare Leaflet globally as it is loaded dynamically
 declare const L: any;
 
 interface BlockData {
-  center: [number, number];
+  center: [number, number]; // [Y, X] in Leaflet CRS.Simple
   minX: number;
   maxX: number;
   minY: number;
@@ -36,15 +35,19 @@ const ENGINE = {
   } as Record<string, BlockData>
 };
 
-const BLOCKS_LIST = Object.keys(ENGINE.blocks);
+const SCALE = {
+  x: ENGINE.canvasWidth / ENGINE.sourceWidth,
+  y: ENGINE.canvasHeight / ENGINE.sourceHeight
+};
 
-// Absolute path to uploaded map file
+const BLOCKS_LIST = Object.keys(ENGINE.blocks);
 const MAP_IMAGE_SRC = `${import.meta.env.BASE_URL}assets/lda-map.png`;
 
 function MasterMaps() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const activeMarkerRef = useRef<any>(null);
+  const databaseRef = useRef<any[]>([]);
 
   const [selectedBlock, setSelectedBlock] = useState('AUTO');
   const [searchInput, setSearchInput] = useState('');
@@ -55,7 +58,28 @@ function MasterMaps() {
     [ENGINE.canvasHeight, ENGINE.canvasWidth]
   ];
 
-  // Load Leaflet and initialize map
+  // Database fetcher (Agar lda_plots_data.json upload ho)
+  useEffect(() => {
+    async function loadPlotData() {
+      const paths = [
+        `${import.meta.env.BASE_URL}lda_plots_data.json`,
+        `${import.meta.env.BASE_URL}assets/lda_plots_data.json`,
+        '/lda_plots_data.json'
+      ];
+      for (const p of paths) {
+        try {
+          const res = await fetch(p);
+          if (res.ok) {
+            databaseRef.current = await res.json();
+            break;
+          }
+        } catch {}
+      }
+    }
+    loadPlotData();
+  }, []);
+
+  // Leaflet map setup
   useEffect(() => {
     let link = document.getElementById('leaflet-css') as HTMLLinkElement;
     if (!link) {
@@ -117,7 +141,7 @@ function MasterMaps() {
     });
   }
 
-  function handleLocate(e?: React.FormEvent) {
+  function executeTrack(e?: React.FormEvent) {
     if (e) e.preventDefault();
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -132,54 +156,73 @@ function MasterMaps() {
     const blockMatch = raw.match(/[A-M]/);
 
     let targetBlock = blockMatch ? blockMatch[0] : (selectedBlock !== 'AUTO' ? selectedBlock : 'M');
-    const plotNum = plotMatch ? plotMatch[0] : '1';
+    if (targetBlock === 'AUTO') targetBlock = 'M';
 
+    if (!plotMatch) {
+      alert('Invalid plot number format.');
+      return;
+    }
+    const plotNum = plotMatch[0];
     setSelectedBlock(targetBlock);
 
     const blockRule = ENGINE.blocks[targetBlock];
-    if (!blockRule) {
+    const database = databaseRef.current;
+    let targetCoords: [number, number] | null = null;
+
+    // Check in database JSON agar available ho
+    if (database && database.length > 0 && blockRule) {
+      const matches = database.filter((item: any) => String(item.plot) === String(plotNum));
+      if (matches.length > 0) {
+        const found = matches.find((item: any) => {
+          const adjX = Math.round(item.x * SCALE.x);
+          const adjY = Math.round(item.y * SCALE.y);
+          return adjX >= blockRule.minX && adjX <= blockRule.maxX &&
+                 adjY >= blockRule.minY && adjY <= blockRule.maxY;
+        });
+        if (found) {
+          targetCoords = [Math.round(found.y * SCALE.y), Math.round(found.x * SCALE.x)];
+        }
+      }
+    }
+
+    // Default exact center of the verified sector
+    if (!targetCoords && blockRule) {
+      targetCoords = blockRule.center;
+    }
+
+    if (targetCoords) {
+      if (activeMarkerRef.current) {
+        map.removeLayer(activeMarkerRef.current);
+      }
+
+      map.flyTo(targetCoords, 1.8, {
+        animate: true,
+        duration: 1.4,
+        easeLinearity: 0.25
+      });
+
+      const marker = L.marker(targetCoords, { icon: getRadarIcon() }).addTo(map);
+      activeMarkerRef.current = marker;
+
+      const infoText = `Plot #${plotNum} · Block ${targetBlock} (LDA Avenue 1)`;
+      setActiveStatus(infoText);
+
+      setTimeout(() => {
+        marker.bindPopup(`
+          <div style="direction:ltr; text-align:center; padding:6px; color:#fff; font-family:sans-serif;">
+            <h3 style="color:#fcd34d; margin:0; font-size:15px; font-weight:bold;">Plot No: ${plotNum}</h3>
+            <p style="color:#94a3b8; margin:3px 0 10px; font-size:12px;">Block ${targetBlock} | LDA Avenue 1</p>
+            <a href="${waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I located Plot #${plotNum} in Block ${targetBlock}, LDA Avenue 1 on Bunyad Master Map. Please confirm plot availability.`)}" 
+               target="_blank" 
+               style="background:#16a34a; color:#fff; padding:6px 14px; text-decoration:none; border-radius:6px; font-weight:bold; font-size:12px; display:inline-block;">
+              Inquire on WhatsApp
+            </a>
+          </div>
+        `).openPopup();
+      }, 1400);
+    } else {
       alert(`Block ${targetBlock} not found.`);
-      return;
     }
-
-    // Micro offset inside block bounds based on plot number
-    const pNum = parseInt(plotNum, 10) || 1;
-    const xSpan = (blockRule.maxX - blockRule.minX);
-    const ySpan = (blockRule.maxY - blockRule.minY);
-
-    const targetX = blockRule.minX + (((pNum * 37) % 100) / 100) * xSpan;
-    const targetY = blockRule.minY + (((pNum * 43) % 100) / 100) * ySpan;
-    const targetCoords: [number, number] = [Math.round(targetY), Math.round(targetX)];
-
-    if (activeMarkerRef.current) {
-      map.removeLayer(activeMarkerRef.current);
-    }
-
-    map.flyTo(targetCoords, 1.8, {
-      animate: true,
-      duration: 1.4,
-      easeLinearity: 0.25
-    });
-
-    const marker = L.marker(targetCoords, { icon: getRadarIcon() }).addTo(map);
-    activeMarkerRef.current = marker;
-
-    const info = `Plot #${plotNum} (Block ${targetBlock}) - Verified Location`;
-    setActiveStatus(info);
-
-    setTimeout(() => {
-      marker.bindPopup(`
-        <div style="direction:ltr; text-align:center; padding:6px; color:#fff; font-family:sans-serif;">
-          <h3 style="color:#fcd34d; margin:0; font-size:15px; font-weight:bold;">Plot No: ${plotNum}</h3>
-          <p style="color:#94a3b8; margin:3px 0 10px; font-size:12px;">Block ${targetBlock} | LDA Avenue 1</p>
-          <a href="${waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I located Plot #${plotNum} in Block ${targetBlock}, LDA Avenue 1 on Bunyad Master Map.`)}" 
-             target="_blank" 
-             style="background:#16a34a; color:#fff; padding:6px 14px; text-decoration:none; border-radius:6px; font-weight:bold; font-size:12px; display:inline-block;">
-            Inquire on WhatsApp
-          </a>
-        </div>
-      `).openPopup();
-    }, 1400);
   }
 
   function handleResetView() {
@@ -211,7 +254,6 @@ function MasterMaps() {
 
   return (
     <div className="space-y-4">
-      {/* Dynamic Keyframe style for Radar animation */}
       <style>{`
         @keyframes leaflet-radar {
           0% { transform: scale(0.3); opacity: 1; }
@@ -228,7 +270,7 @@ function MasterMaps() {
         }
       `}</style>
 
-      {/* Top Bar */}
+      {/* Top Header */}
       <div className="glass rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 border border-cyan/30 shadow-cyan-glow">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-cyan/10 border border-cyan/30 text-cyan">
@@ -240,11 +282,11 @@ function MasterMaps() {
                 LDA Avenue 1 Smart Master Map &amp; GPS Navigator
               </h2>
               <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
-                LEAFLET ENGINE
+                ACCURATE GRID
               </span>
             </div>
             <p className="font-mono text-[11px] text-cyan/70 tracking-wider">
-              HIGH PRECISION PLOT LOCATOR &bull; CEO {CEO_NAME} (0321-9404812)
+              SUPERVISED BY CEO {CEO_NAME} (0321-9404812)
             </p>
           </div>
         </div>
@@ -264,7 +306,7 @@ function MasterMaps() {
 
       {/* Control Console */}
       <div className="glass rounded-xl p-4 space-y-3 border border-cyan/20">
-        <form onSubmit={handleLocate} className="flex flex-col sm:flex-row items-center gap-2">
+        <form onSubmit={executeTrack} className="flex flex-col sm:flex-row items-center gap-2">
           <select
             value={selectedBlock}
             onChange={(e) => handleBlockChange(e.target.value)}
