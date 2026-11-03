@@ -1,280 +1,581 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from '@/lib/motion';
 import {
-  Search, MapPin, BadgeCheck, X, ChevronLeft, MessageCircle, ShieldCheck,
-  FileText, Filter, SlidersHorizontal, ArrowUpDown
+  Building2, Search, Heart, MapPin, Phone, MessageCircle,
+  TrendingUp, Calculator, ShieldCheck, Filter, X, ExternalLink,
+  Coins, Sparkles, CheckCircle2, Home, Landmark
 } from 'lucide-react';
-import { SOCIETIES, type Society } from '@/data/societies';
-import { waLink, CEO_PHONE } from '@/lib/constants';
+import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-type TierCategory = 'all' | 'A' | 'B' | 'C';
-type PlotSizeFilter = 'all' | '5 Marla' | '10 Marla' | '1 Kanal';
+interface PropertyItem {
+  id: string | number;
+  title: string;
+  type: string;
+  society: string;
+  price: string;
+  phone: string;
+  desc: string;
+  img: string;
+}
+
+const FALLBACK_PROPERTIES: PropertyItem[] = [
+  {
+    id: 101,
+    title: '10 Marla Prime Residential Plot - Block J',
+    type: 'Plot',
+    society: 'LDA Avenue 1',
+    price: 'PKR 17,500,000',
+    phone: CEO_PHONE,
+    desc: 'Direct possession plot on 50ft wide road near Commercial Broadway. Ready for immediate construction under LDA bylaws.',
+    img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 102,
+    title: '1 Kanal Luxury Turnkey Designer House',
+    type: 'House',
+    society: 'LDA Avenue 1',
+    price: 'PKR 48,000,000',
+    phone: CEO_PHONE,
+    desc: 'Brand new 5-bed modern villa with double height lobby, Spanish tiles, Grohe fittings, and servant quarter.',
+    img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 103,
+    title: '5 Marla Fully Developed Plot - Sector B',
+    type: 'Plot',
+    society: 'Jubilee Town',
+    price: 'PKR 10,500,000',
+    phone: CEO_PHONE,
+    desc: 'Park face location, all dues clear with official NDC. Electricity and gas network operational.',
+    img: 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 104,
+    title: '4 Marla Commercial Plaza (GF + 3 Floors)',
+    type: 'Commercial',
+    society: 'LDA Avenue 1',
+    price: 'PKR 35,000,000',
+    phone: CEO_PHONE,
+    desc: 'Main boulevard commercial building with confirmed corporate rental yield. High footfall zone.',
+    img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 105,
+    title: '1 Kanal Prime Residential Plot - Phase 11 Rahbar',
+    type: 'Plot',
+    society: 'DHA Rahbar',
+    price: 'PKR 32,000,000',
+    phone: CEO_PHONE,
+    desc: 'Hot location plot near Ring Road interchange. Direct allocation, no litigation.',
+    img: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 106,
+    title: '10 Marla Brand New Spanish Villa',
+    type: 'House',
+    society: 'Izmir Town',
+    price: 'PKR 38,500,000',
+    phone: CEO_PHONE,
+    desc: 'Solid construction with Grade-60 steel, solid ash wood doors, and imported fittings. Gated secure community.',
+    img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
+  }
+];
+
+const SOCIETIES_PILLS = [
+  'All',
+  'LDA Avenue 1',
+  'DHA Rahbar',
+  'DHA Lahore',
+  'Izmir Town',
+  'Jubilee Town',
+  'Bahria Town',
+  'Lake City'
+];
 
 function SocietyDirectory() {
-  const [query, setQuery] = useState('');
-  const [corridor, setCorridor] = useState<'all' | 'Raiwind Road & Canal' | 'Southern, Central & Cantt'>('all');
-  const [tier, setTier] = useState<TierCategory>('all');
-  const [plotSize, setPlotSize] = useState<PlotSizeFilter>('all');
-  const [onlyApproved, setOnlyApproved] = useState(false);
-  const [active, setActive] = useState<Society | null>(null);
+  const [properties, setProperties] = useState<PropertyItem[]>(FALLBACK_PROPERTIES);
+  const [loading, setLoading] = useState(false);
+  const [selectedSociety, setSelectedSociety] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'plot' | 'house' | 'commercial'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [detailModal, setDetailModal] = useState<PropertyItem | null>(null);
+  const [savedIds, setSavedIds] = useState<Array<string | number>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('bunyad_saved_properties') || '[]');
+    } catch {
+      return [];
+    }
+  });
 
+  // ROI Calculator State
+  const [roiPrice, setRoiPrice] = useState(15000000);
+  const [roiGrowth, setRoiGrowth] = useState(12);
+  const [roiYears, setRoiYears] = useState(3);
+
+  // Fetch properties from Supabase
+  useEffect(() => {
+    async function loadProperties() {
+      if (!isSupabaseConfigured || !supabase) return;
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .limit(100);
+
+        if (!error && data && data.length > 0) {
+          const formatted: PropertyItem[] = data.map((item: any) => ({
+            id: item.id || Math.random(),
+            title: item.title || item.Title || 'Verified Property',
+            type: item.type || item.Type || 'Plot',
+            society: item.society || item.Society || 'Lahore',
+            price: item.price ? (String(item.price).startsWith('PKR') ? item.price : `PKR ${item.price}`) : 'Demand on Call',
+            phone: item.phone || item.Phone || CEO_PHONE,
+            desc: item.desc || item.Description || 'Direct verified listing on BUNYAD portal.',
+            img: item.img || item.Image || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+          }));
+          setProperties(formatted);
+        }
+      } catch (err) {
+        console.warn('Using fallback verified properties:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProperties();
+  }, []);
+
+  // Bookmark property toggle
+  function toggleSaveProperty(id: string | number) {
+    let updated: Array<string | number>;
+    if (savedIds.includes(id)) {
+      updated = savedIds.filter((x) => x !== id);
+    } else {
+      updated = [...savedIds, id];
+    }
+    setSavedIds(updated);
+    localStorage.setItem('bunyad_saved_properties', JSON.stringify(updated));
+  }
+
+  // Filter properties
   const filtered = useMemo(() => {
-    return SOCIETIES.filter((s) => {
-      const q = query.toLowerCase().trim();
-      const matchQ = !q || s.name.toLowerCase().includes(q) || (s.nameUr || '').includes(query);
-      const matchC = corridor === 'all' || s.corridor === corridor;
+    return properties.filter((item) => {
+      const matchSoc =
+        selectedSociety === 'All' ||
+        item.society.toLowerCase().includes(selectedSociety.toLowerCase());
 
-      // LDA / NOC Approval filter
-      const isApproved = s.noc.toLowerCase().includes('approved') || s.noc.toLowerCase().includes('lda');
-      const matchNoc = !onlyApproved || isApproved;
+      const matchCat =
+        selectedCategory === 'all' ||
+        (selectedCategory === 'plot' && item.type.toLowerCase().includes('plot')) ||
+        (selectedCategory === 'house' &&
+          (item.type.toLowerCase().includes('house') || item.type.toLowerCase().includes('home'))) ||
+        (selectedCategory === 'commercial' &&
+          (item.type.toLowerCase().includes('commercial') ||
+            item.type.toLowerCase().includes('plaza') ||
+            item.type.toLowerCase().includes('shop')));
 
-      // Plot size matching in pricing brackets
-      const matchSize = plotSize === 'all' || s.pricing.some((p) => p.size.toLowerCase().includes(plotSize.toLowerCase()));
+      const q = searchQuery.toLowerCase();
+      const matchQuery =
+        !q ||
+        item.title.toLowerCase().includes(q) ||
+        item.society.toLowerCase().includes(q) ||
+        item.desc.toLowerCase().includes(q) ||
+        item.price.toLowerCase().includes(q);
 
-      // Dynamic Tier assignment based on pricing & featured flagship status
-      const isTierA = s.featured || s.pricing.some((p) => p.price.toLowerCase().includes('crore'));
-      const isTierB = !isTierA && s.pricing.some((p) => p.price.toLowerCase().includes('lakh') && parseInt(p.price.replace(/\D/g, '') || '0', 10) > 40);
-      const isTierC = !isTierA && !isTierB;
-
-      let matchTier = true;
-      if (tier === 'A') matchTier = isTierA;
-      if (tier === 'B') matchTier = isTierB;
-      if (tier === 'C') matchTier = isTierC;
-
-      return matchQ && matchC && matchNoc && matchSize && matchTier;
+      return matchSoc && matchCat && matchQuery;
     });
-  }, [query, corridor, tier, plotSize, onlyApproved]);
+  }, [properties, selectedSociety, selectedCategory, searchQuery]);
+
+  // Inventory counts
+  const totalCount = properties.length;
+  const plotCount = properties.filter((p) => p.type.toLowerCase().includes('plot')).length;
+  const houseCount = properties.filter(
+    (p) => p.type.toLowerCase().includes('house') || p.type.toLowerCase().includes('home')
+  ).length;
+  const commercialCount = properties.filter(
+    (p) =>
+      p.type.toLowerCase().includes('commercial') ||
+      p.type.toLowerCase().includes('plaza') ||
+      p.type.toLowerCase().includes('shop')
+  ).length;
+
+  // ROI Result
+  const roiValue = roiPrice * Math.pow(1 + roiGrowth / 100, roiYears);
+
+  // Saved bookmark items
+  const savedItems = properties.filter((p) => savedIds.includes(p.id));
 
   return (
-    <div className="space-y-4">
-      {/* Search & Comprehensive Multi-Filter Bar */}
-      <div className="glass rounded-xl p-4 space-y-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          {/* Search Field */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan/50" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search 38+ societies by English or Urdu name..."
-              className="w-full rounded-lg border border-cyan/20 bg-obsidian/60 py-2 pl-10 pr-3 text-sm text-platinum placeholder:text-cyan/30 focus:border-cyan focus:outline-none"
-            />
-            {query && (
-              <button
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan/50 hover:text-cyan"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+    <div className="space-y-6">
+      {/* Live Market Rates Marquee Ticker */}
+      <div className="overflow-hidden rounded-xl border border-cyan/30 bg-[#040810] py-2 px-4 shadow-cyan-glow">
+        <div className="flex items-center gap-3 whitespace-nowrap text-xs">
+          <span className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase text-amber-400 shrink-0">
+            <Coins className="h-3.5 w-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+            BUNYAD Live Market Ticker:
+          </span>
+          <div className="flex items-center gap-6 font-mono text-[11px] text-platinum/80 animate-pulse">
+            <span>• LDA Avenue 1 (10 Marla): <strong className="text-cyan">1.45 Cr – 1.85 Cr</strong></span>
+            <span>• LDA Avenue 1 (1 Kanal): <strong className="text-cyan">2.80 Cr – 3.50 Cr</strong></span>
+            <span>• DHA Rahbar Phase 11 (5 Marla): <strong className="text-cyan">1.10 Cr – 1.35 Cr</strong></span>
+            <span>• DHA Phase 9 Prism (1 Kanal): <strong className="text-cyan">2.60 Cr – 3.40 Cr</strong></span>
+            <span>• Jubilee Town (5 Marla): <strong className="text-cyan">85 Lac – 1.15 Cr</strong></span>
+            <span>• Izmir Town (10 Marla House): <strong className="text-cyan">3.20 Cr – 4.10 Cr</strong></span>
           </div>
+        </div>
+      </div>
 
-          {/* Corridor Filter */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(['all', 'Raiwind Road & Canal', 'Southern, Central & Cantt'] as const).map((c) => (
+      {/* Hero Header & Verified Inventory Counters */}
+      <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <div className="space-y-1.5 max-w-2xl">
+          <div className="flex items-center gap-2">
+            <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
+              OFFICIAL VERIFIED REGISTRY
+            </span>
+            <span className="font-mono text-[10px] text-cyan/70">
+              BUNYAD PROPTECH PORTAL (بنیاد)
+            </span>
+          </div>
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-platinum flex items-center gap-2">
+            <Building2 className="h-6 w-6 text-cyan" />
+            Find Verified Properties &amp; Plots in Lahore
+          </h2>
+          <p className="text-xs text-platinum/70 leading-relaxed">
+            Direct authenticated deals across LDA Avenue 1, DHA Rahbar, Jubilee Town, Izmir, and Bahria Town. Zero hidden charges, 100% legal NDC verification supervised by <strong>CEO {CEO_NAME}</strong>.
+          </p>
+        </div>
+
+        {/* Live Inventory Counters */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto">
+          <div className="rounded-xl border border-cyan/20 bg-obsidian/80 p-3 text-center min-w-[90px]">
+            <span className="block font-display text-xl font-black text-cyan">{totalCount}</span>
+            <span className="font-mono text-[9px] uppercase text-platinum/50 font-bold">Total Listings</span>
+          </div>
+          <div className="rounded-xl border border-emerald-400/25 bg-obsidian/80 p-3 text-center min-w-[90px]">
+            <span className="block font-display text-xl font-black text-emerald-400">{plotCount}</span>
+            <span className="font-mono text-[9px] uppercase text-platinum/50 font-bold">Plots</span>
+          </div>
+          <div className="rounded-xl border border-blue-400/25 bg-obsidian/80 p-3 text-center min-w-[90px]">
+            <span className="block font-display text-xl font-black text-blue-400">{houseCount}</span>
+            <span className="font-mono text-[9px] uppercase text-platinum/50 font-bold">Houses</span>
+          </div>
+          <div className="rounded-xl border border-purple-400/25 bg-obsidian/80 p-3 text-center min-w-[90px]">
+            <span className="block font-display text-xl font-black text-purple-400">{commercialCount}</span>
+            <span className="font-mono text-[9px] uppercase text-platinum/50 font-bold">Commercial</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar Console */}
+      <div className="glass rounded-xl p-4 border border-cyan/20 space-y-3">
+        {/* Society Quick Jump Pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="font-mono text-[10px] text-cyan/70 uppercase tracking-wider mr-1">
+            Societies:
+          </span>
+          {SOCIETIES_PILLS.map((soc) => (
+            <button
+              key={soc}
+              type="button"
+              onClick={() => setSelectedSociety(soc)}
+              className={`rounded-lg px-3 py-1 font-mono text-xs font-semibold transition cursor-pointer ${
+                selectedSociety === soc
+                  ? 'bg-cyan text-obsidian shadow-cyan-glow font-bold'
+                  : 'bg-obsidian/60 text-platinum/70 border border-cyan/20 hover:border-cyan hover:text-cyan'
+              }`}
+            >
+              {soc}
+            </button>
+          ))}
+        </div>
+
+        {/* Category Buttons & Live Search Input */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-cyan/10">
+          <div className="flex items-center gap-1 bg-obsidian/80 p-1 rounded-lg border border-cyan/20 w-full sm:w-auto">
+            {(['all', 'plot', 'house', 'commercial'] as const).map((cat) => (
               <button
-                key={c}
-                onClick={() => setCorridor(c)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-mono font-medium transition cursor-pointer ${
-                  corridor === c ? 'bg-cyan/20 text-cyan border border-cyan/40' : 'text-platinum/60 hover:text-cyan border border-transparent'
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`rounded px-3 py-1 text-xs font-mono font-bold capitalize transition cursor-pointer flex-1 sm:flex-none ${
+                  selectedCategory === cat
+                    ? 'bg-cyan/20 text-cyan border border-cyan/40 shadow-sm'
+                    : 'text-platinum/60 hover:text-platinum'
                 }`}
               >
-                {c === 'all' ? 'All Corridors' : c.includes('Raiwind') ? 'Raiwind & Canal' : 'Southern & Cantt'}
+                {cat === 'all' ? 'All Types' : cat}
               </button>
             ))}
           </div>
 
-          <span className="font-mono text-xs text-cyan/70 whitespace-nowrap self-end lg:self-center">
-            Found: <strong className="text-cyan">{filtered.length}</strong> / {SOCIETIES.length}
-          </span>
-        </div>
-
-        {/* Secondary Filters: Tier, Plot Size & Approval Toggle */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-cyan/10 pt-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-cyan/60">
-              <SlidersHorizontal className="h-3 w-3" /> Filters:
-            </span>
-
-            {/* Category / Tier Filter */}
-            <div className="flex items-center gap-1 rounded-md bg-obsidian/40 p-0.5 border border-cyan/15 text-xs">
-              {(['all', 'A', 'B', 'C'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTier(t)}
-                  className={`rounded px-2.5 py-0.5 font-mono text-[11px] transition cursor-pointer ${
-                    tier === t ? 'bg-cyan text-black font-bold' : 'text-platinum/60 hover:text-cyan'
-                  }`}
-                >
-                  {t === 'all' ? 'All Tiers' : `Cat ${t}`}
-                </button>
-              ))}
-            </div>
-
-            {/* Plot Size Filter */}
-            <div className="flex items-center gap-1 rounded-md bg-obsidian/40 p-0.5 border border-cyan/15 text-xs">
-              {(['all', '5 Marla', '10 Marla', '1 Kanal'] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setPlotSize(s)}
-                  className={`rounded px-2.5 py-0.5 font-mono text-[11px] transition cursor-pointer ${
-                    plotSize === s ? 'bg-cyan/20 text-cyan font-bold border border-cyan/30' : 'text-platinum/60 hover:text-cyan'
-                  }`}
-                >
-                  {s === 'all' ? 'All Sizes' : s}
-                </button>
-              ))}
-            </div>
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cyan/50" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title, society, or price..."
+              className="w-full rounded-lg border border-cyan/30 bg-obsidian/90 py-2 pl-9 pr-3 text-xs text-platinum placeholder:text-cyan/30 outline-none focus:border-cyan"
+            />
           </div>
-
-          {/* LDA Approved Only Switch */}
-          <button
-            onClick={() => setOnlyApproved(!onlyApproved)}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1 font-mono text-xs transition cursor-pointer ${
-              onlyApproved
-                ? 'border-emerald-400/50 bg-emerald-950/30 text-emerald-300'
-                : 'border-cyan/20 text-platinum/60 hover:border-cyan/40 hover:text-cyan'
-            }`}
-          >
-            <ShieldCheck className={`h-3.5 w-3.5 ${onlyApproved ? 'text-emerald-400' : 'text-cyan/60'}`} />
-            LDA / Verified Only
-          </button>
         </div>
       </div>
 
-      {/* Societies Grid */}
-      {filtered.length === 0 ? (
-        <div className="glass rounded-xl p-8 text-center">
-          <p className="font-mono text-sm text-platinum/50">No societies found matching your active filter criteria.</p>
-          <button
-            onClick={() => { setQuery(''); setCorridor('all'); setTier('all'); setPlotSize('all'); setOnlyApproved(false); }}
-            className="btn-cyan mt-3 py-1.5 text-xs cursor-pointer"
-          >
-            Reset All Filters
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((s) => (
-            <motion.button
-              key={s.id}
-              layout
-              onClick={() => setActive(s)}
-              whileHover={{ y: -3 }}
-              className="glass group relative overflow-hidden rounded-xl p-4 text-left transition hover:neon-border cursor-pointer"
+      {/* Properties Showcase Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filtered.map((item) => {
+          const isSaved = savedIds.includes(item.id);
+          return (
+            <div
+              key={item.id}
+              className="group glass rounded-2xl border border-cyan/15 hover:border-cyan/40 overflow-hidden flex flex-col justify-between transition-all duration-300 shadow-lg hover:shadow-cyan-glow"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-display text-base font-bold text-platinum group-hover:neon-text transition">{s.name}</h3>
-                  {s.nameUr && <p className="font-mono text-[11px] text-cyan/50">{s.nameUr}</p>}
+              <div>
+                {/* Image Banner & Tags */}
+                <div className="relative h-48 w-full bg-obsidian overflow-hidden">
+                  <img
+                    src={item.img}
+                    alt={item.title}
+                    className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-80" />
+                  <span className="absolute top-3 left-3 chip border-cyan/40 bg-obsidian/90 text-cyan text-[10px] font-mono font-bold">
+                    {item.type}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleSaveProperty(item.id)}
+                    className={`absolute top-3 right-3 p-2 rounded-lg backdrop-blur-md border transition cursor-pointer ${
+                      isSaved
+                        ? 'border-rose-500 bg-rose-500/20 text-rose-400'
+                        : 'border-cyan/20 bg-obsidian/80 text-platinum/60 hover:text-rose-400'
+                    }`}
+                    title={isSaved ? 'Remove Bookmark' : 'Save to Dream Properties'}
+                  >
+                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-rose-500 text-rose-500' : ''}`} />
+                  </button>
+                  <span className="absolute bottom-2.5 left-3 text-[11px] font-mono text-cyan flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-rose-400" /> {item.society}
+                  </span>
                 </div>
-                {s.featured && <span className="chip">Flagship</span>}
+
+                {/* Content */}
+                <div className="p-4 space-y-2">
+                  <h3 className="font-display text-sm font-bold text-platinum group-hover:text-cyan transition line-clamp-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-platinum/60 line-clamp-2 leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
               </div>
-              <p className="mt-2 line-clamp-2 text-xs text-platinum/60">{s.plan}</p>
-              <div className="mt-3 flex items-center justify-between border-t border-cyan/10 pt-2.5">
-                <span className="flex items-center gap-1 text-[11px] text-cyan/80">
-                  <MapPin className="h-3 w-3" /> {s.noc}
-                </span>
-                <span className="text-[11px] font-mono font-semibold text-cyan/90">
-                  {s.dcRatePerMarla.split(' – ')[0]} / M
-                </span>
+
+              {/* Price & Action Footer */}
+              <div className="p-4 pt-0">
+                <div className="pt-3 border-t border-cyan/10 flex items-center justify-between mb-3">
+                  <div>
+                    <span className="font-mono text-[9px] uppercase text-platinum/40 block">Demand / Price</span>
+                    <span className="font-display text-base font-black neon-text">{item.price}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDetailModal(item)}
+                    className="text-xs text-cyan hover:underline font-mono cursor-pointer"
+                  >
+                    View Specs
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I am interested in this listing on BUNYAD: "${item.title}" in ${item.society} (Demand: ${item.price}). Please share plot number & NDC documents.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-cyan flex items-center justify-center gap-1.5 py-2 text-xs font-bold"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 text-emerald-400" /> WhatsApp
+                  </a>
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(item.society + ' Lahore')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-ghost flex items-center justify-center gap-1.5 py-2 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15"
+                  >
+                    <MapPin className="h-3.5 w-3.5" /> Map Location
+                  </a>
+                </div>
               </div>
-            </motion.button>
-          ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Real Estate Investment ROI Calculator */}
+      <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow space-y-4">
+        <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
+          <div className="p-2 rounded-lg bg-cyan/10 text-cyan border border-cyan/30">
+            <Calculator className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-display text-base font-bold text-cyan">
+              Real Estate Investment ROI &amp; Capital Gain Engine
+            </h3>
+            <p className="text-xs text-platinum/60">
+              Calculate projected property appreciation in Lahore based on compound annual growth metrics.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <label>
+            <span className="font-mono text-[10px] uppercase text-cyan/70">Purchase Price (PKR)</span>
+            <input
+              type="number"
+              value={roiPrice}
+              onChange={(e) => setRoiPrice(Number(e.target.value))}
+              className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 font-mono text-sm text-cyan outline-none focus:border-cyan"
+            />
+          </label>
+          <label>
+            <span className="font-mono text-[10px] uppercase text-cyan/70">Expected Annual Growth (%)</span>
+            <input
+              type="number"
+              value={roiGrowth}
+              onChange={(e) => setRoiGrowth(Number(e.target.value))}
+              className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 font-mono text-sm text-cyan outline-none focus:border-cyan"
+            />
+          </label>
+          <label>
+            <span className="font-mono text-[10px] uppercase text-cyan/70">Holding Period (Years)</span>
+            <input
+              type="number"
+              value={roiYears}
+              onChange={(e) => setRoiYears(Number(e.target.value))}
+              className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 font-mono text-sm text-cyan outline-none focus:border-cyan"
+            />
+          </label>
+        </div>
+
+        <div className="rounded-xl border border-cyan/20 bg-gradient-to-r from-obsidian via-[#0a1525] to-obsidian p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div>
+            <span className="font-mono text-[10px] text-platinum/60 uppercase">Estimated Asset Value after {roiYears} Years</span>
+            <p className="font-display text-2xl font-black neon-text mt-0.5">
+              PKR {Math.round(roiValue).toLocaleString()}
+            </p>
+          </div>
+          <a
+            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I calculated an investment ROI on BUNYAD: Purchase PKR ${roiPrice.toLocaleString()} growing to PKR ${Math.round(roiValue).toLocaleString()} in ${roiYears} years. What are the best plots currently available for this budget?`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-cyan py-2.5 px-4 text-xs font-bold flex items-center gap-1.5"
+          >
+            <Sparkles className="h-4 w-4" /> Consult with CEO on ROI
+          </a>
+        </div>
+      </div>
+
+      {/* Bookmarked / Saved Dream Properties */}
+      {savedItems.length > 0 && (
+        <div className="glass rounded-xl p-5 border border-cyan/20 space-y-3">
+          <div className="flex items-center justify-between border-b border-cyan/15 pb-2">
+            <h4 className="font-display text-sm font-bold text-cyan flex items-center gap-2">
+              <Heart className="h-4 w-4 text-rose-500 fill-rose-500" />
+              Your Saved Dream Properties ({savedItems.length})
+            </h4>
+            <button
+              type="button"
+              onClick={() => {
+                setSavedIds([]);
+                localStorage.removeItem('bunyad_saved_properties');
+              }}
+              className="font-mono text-xs text-platinum/50 hover:text-rose-400 underline cursor-pointer"
+            >
+              Clear Saved
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {savedItems.map((s) => (
+              <div key={s.id} className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3 flex items-center gap-3">
+                <img src={s.img} alt={s.title} className="h-12 w-12 rounded-lg object-cover border border-cyan/20" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-display text-xs font-bold text-platinum truncate">{s.title}</p>
+                  <p className="font-mono text-[11px] text-cyan font-bold">{s.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Detail Modal */}
+      {/* Property Detail Modal */}
       <AnimatePresence>
-        {active && <SocietyModal society={active} onClose={() => setActive(null)} />}
+        {detailModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-md p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-strong w-full max-w-lg rounded-2xl border border-cyan/40 p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto"
+            >
+              <button
+                type="button"
+                onClick={() => setDetailModal(null)}
+                className="absolute top-4 right-4 text-platinum/50 hover:text-cyan cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="h-56 w-full rounded-xl overflow-hidden border border-cyan/30">
+                <img src={detailModal.img} alt={detailModal.title} className="h-full w-full object-cover" />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="chip border-cyan/40 bg-cyan/10 text-cyan text-xs font-mono font-bold">
+                  {detailModal.type}
+                </span>
+                <span className="font-display text-xl font-black neon-text">{detailModal.price}</span>
+              </div>
+
+              <div>
+                <h3 className="font-display text-base font-bold text-platinum">{detailModal.title}</h3>
+                <p className="font-mono text-xs text-rose-400 flex items-center gap-1 mt-1">
+                  <MapPin className="h-3.5 w-3.5" /> {detailModal.society}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-cyan/15 bg-obsidian/70 p-3.5 text-xs text-platinum/80 leading-relaxed space-y-1">
+                <h4 className="font-mono text-[10px] uppercase text-cyan font-bold">Verified Specifications:</h4>
+                <p>{detailModal.desc}</p>
+              </div>
+
+              <div className="pt-2 grid grid-cols-2 gap-3">
+                <a
+                  href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, Inquiry about listing: "${detailModal.title}" (${detailModal.society})`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-cyan flex items-center justify-center gap-2 py-2.5 text-xs font-bold"
+                >
+                  <MessageCircle className="h-4 w-4 text-emerald-400" /> WhatsApp CEO
+                </a>
+                <a
+                  href={`tel:${CEO_PHONE}`}
+                  className="btn-ghost flex items-center justify-center gap-2 py-2.5 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15"
+                >
+                  <Phone className="h-4 w-4" /> Call Direct
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );
 }
 
-function SocietyModal({ society, onClose }: { society: Society; onClose: () => void }) {
-  const waMsg = `Asalam o Alaikum CEO Taha Mubeen Bhutta, I am interested in ${society.name} (${society.nameUr || ''}). Please share available plot files and current DC valuation.`;
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-obsidian/80 backdrop-blur-sm sm:items-center"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <motion.div
-        onClick={(e) => e.stopPropagation()}
-        initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-        className="glass-strong relative max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-cyan/30 p-6 sm:rounded-2xl shadow-cyan-glow"
-      >
-        {/* Sticky Back Header */}
-        <div className="sticky -mx-6 -top-6 z-10 mb-4 flex items-center justify-between bg-obsidian/90 px-6 py-2.5 backdrop-blur border-b border-cyan/15">
-          <button
-            onClick={onClose}
-            className="flex items-center gap-1.5 rounded-md border border-cyan/30 px-3 py-1.5 text-xs text-cyan transition hover:bg-cyan/10 cursor-pointer"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" /> Back / بند کریں
-          </button>
-          <button onClick={onClose} className="text-cyan/60 hover:text-cyan cursor-pointer">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="flex items-start justify-between pr-8">
-          <div>
-            <h2 className="font-display text-2xl font-black text-platinum">{society.name}</h2>
-            {society.nameUr && <p className="font-mono text-sm text-cyan/60">{society.nameUr}</p>}
-          </div>
-          <span className="chip"><BadgeCheck className="h-3 w-3" /> {society.noc}</span>
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <InfoCard icon={FileText} title="Master Plan & Specs" body={society.plan} />
-          <InfoCard icon={ShieldCheck} title="NOC / Legal Clearance" body={society.noc} />
-          <InfoCard icon={MapPin} title="Official DC Rate / Marla" body={society.dcRatePerMarla} />
-          <InfoCard icon={FileText} title="FBR Valuation Estimate" body={society.fbrEstimate} />
-        </div>
-
-        <h3 className="mt-5 font-display text-xs font-bold uppercase tracking-wider text-cyan">
-          Live Pricing Brackets by Plot Size
-        </h3>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {society.pricing.map((p) => (
-            <div key={p.size} className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3">
-              <p className="font-mono text-[10px] uppercase text-cyan/60">{p.size}</p>
-              <p className="mt-1 text-sm font-semibold text-platinum">{p.price}</p>
-            </div>
-          ))}
-        </div>
-
-        <a
-          href={waLink(waMsg)} target="_blank" rel="noopener noreferrer"
-          className="btn-cyan mt-5 w-full cursor-pointer flex items-center justify-center gap-2 py-2.5 text-sm font-bold shadow-cyan-glow"
-        >
-          <MessageCircle className="h-4 w-4 text-emerald-400" /> WhatsApp CEO Taha Mubeen Bhutta ({CEO_PHONE})
-        </a>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 export default memo(SocietyDirectory);
-
-function InfoCard({ icon: Icon, title, body }: { icon: typeof MapPin; title: string; body: string }) {
-  return (
-    <div className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3">
-      <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase text-cyan/60">
-        <Icon className="h-3 w-3" /> {title}
-      </p>
-      <p className="mt-1 text-sm text-platinum/90">{body}</p>
-    </div>
-  );
-}
