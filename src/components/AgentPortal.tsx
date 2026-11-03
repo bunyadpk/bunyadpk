@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from '@/lib/motion';
 import {
   Building2, Compass, Video, ShieldCheck, Calculator, CheckCircle2,
   Phone, Download, Calendar, Layers, HardHat, FileText, Send, Sparkles,
-  Camera, Lock, Eye, Check, X, ShieldAlert, Award
+  Volume2, VolumeX, Bot, Loader2, ArrowRight, UserCheck, RefreshCw, X, MessageSquare
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
+import { askBunyadAI, isGeminiConfigured } from '@/lib/gemini';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 // 15 Standard Core Civil Operations
@@ -14,21 +15,21 @@ const CIVIL_SERVICES = [
   { id: 2, title: 'Complete Grey Structure Engineering', icon: HardHat, desc: 'Seismic raft foundation, Grade-60 steel cage framing, machine batch mix concrete, Awwal kiln bricks, and chemical waterproofing.' },
   { id: 3, title: 'Luxury Turnkey Finishing Works', icon: Layers, desc: 'Imported Spanish floor porcelain, Turkish bath sanitaries, solid ash wood doors, thermo-flux false ceilings, and bespoke cabinetry.' },
   { id: 4, title: 'Bulk Material Supply & Procurement', icon: Layers, desc: 'Mill-direct Grade-60 saria, Maple Leaf / Bestway cement, Margalla crush, and Awwal bricks with laboratory compliance certificates.' },
-  { id: 5, title: 'Dedicated Site Supervision & Project Managers', icon: Award, desc: 'Resident PEC-registered site civil engineers conducting daily slump tests, steel rebar spacing inspections, and material audits.' },
+  { id: 5, title: 'Dedicated Site Supervision & Project Managers', icon: ShieldCheck, desc: 'Resident PEC-registered site civil engineers conducting daily slump tests, steel rebar spacing inspections, and material audits.' },
   { id: 6, title: '2D CAD Blueprints & 3D Architectural Studio', icon: Compass, desc: 'Bylaw-compliant structural blueprints, MEP (Mechanical, Electrical, Plumbing) working sheets, and hyper-realistic 3D walkthroughs.' },
   { id: 7, title: 'Live 24/7 Remote CCTV Site Telemetry', icon: Video, desc: 'High-definition optical cameras installed at project front, active roof lintel, and material storage yards for overseas owners.' },
-  { id: 8, title: 'Private Client Dashboard & Milestone Tracking', icon: Eye, desc: 'Encrypted client terminal tracking foundation, grey slab, MEP conduit, and tiling progress percentages in real time.' },
+  { id: 8, title: 'Private Client Dashboard & Milestone Tracking', icon: Calculator, desc: 'Encrypted client terminal tracking foundation, grey slab, MEP conduit, and tiling progress percentages in real time.' },
   { id: 9, title: 'Digital BOQ & Transparent Expense Ledgers', icon: Calculator, desc: 'Detailed itemized bill of quantities with guaranteed fixed pricing, mitigating material inflation and hidden extras.' },
   { id: 10, title: '100% Escrow Milestone Financial Protection', icon: ShieldCheck, desc: 'Phased stage disbursements (25%-35%-25%-15%) audited and cleared strictly upon signed engineer site demarcation.' },
   { id: 11, title: 'Skilled Labour Force & Master Craftsmen', icon: HardHat, desc: 'Certified master masons, structural shuttering carpenters, high-amperage electricians, and PPRC plumbing technicians.' },
-  { id: 12, title: 'QA/QC Material Laboratory Stress Testing', icon: Award, desc: 'Compressive concrete cube crushing tests, steel tensile yield stress analysis, and water absorption checks for total peace of mind.' },
-  { id: 13, title: '3-Year Structural Warranty & Maintenance Hub', icon: ShieldAlert, desc: 'Comprehensive warranty covering foundation settlement, structural cracks, roof dampness/leakage, and plumbing failures.' },
+  { id: 12, title: 'QA/QC Material Laboratory Stress Testing', icon: ShieldCheck, desc: 'Compressive concrete cube crushing tests, steel tensile yield stress analysis, and water absorption checks for total peace of mind.' },
+  { id: 13, title: '3-Year Structural Warranty & Maintenance Hub', icon: ShieldCheck, desc: 'Comprehensive warranty covering foundation settlement, structural cracks, roof dampness/leakage, and plumbing failures.' },
   { id: 14, title: 'LDA, DHA & Private Society Map Sanctions', icon: FileText, desc: 'End-to-end liaison with LDA One-Window and Town Planning directors for immediate building plan NOC approvals.' },
   { id: 15, title: 'Smart Gantt Timeline Execution Schedule', icon: Calendar, desc: 'Milestone tracking system guaranteeing exact 6 to 9-month turnkey completion dates with milestone delivery penalties.' }
 ];
 
 export default function AgentPortal() {
-  const [activeTab, setActiveTab] = useState<'services' | 'cad' | 'cctv' | 'client'>('services');
+  const [activeTab, setActiveTab] = useState<'ai-agent' | 'services' | 'cad' | 'cctv' | 'client'>('ai-agent');
   const [selectedService, setSelectedService] = useState<string | null>(null);
 
   // Booking Modal State
@@ -37,20 +38,105 @@ export default function AgentPortal() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // 2D CAD State
+  // AI Conversational Live Agent State
+  const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user'; text: string; time: string }>>([
+    {
+      sender: 'ai',
+      text: `Asalam-o-Alaikum! Main Bin Taha Associates ka Autonomous Engineering AI Agent hoon. Main CEO Taha Mubeen Bhutta ke direct supervision mein aapko plot verification, LDA bylaws, construction cost, ya turnkey booking mein live guide karne ke liye tayyar hoon. Aap kis cheez ke bare mein janna chahte hain?`,
+      time: 'Just now'
+    }
+  ]);
+  const [inputMsg, setInputMsg] = useState('');
+  const [aiTyping, setAiTyping] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // 2D CAD Interactive Controls
   const [cadWidth, setCadWidth] = useState(30);
   const [cadLength, setCadLength] = useState(60);
   const [cadOption, setCadOption] = useState<1 | 2 | 3>(1);
+  const [cadStoreys, setCadStoreys] = useState(2);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // CCTV State
+  // CCTV Live Telemetry Stream
   const [cctvCam, setCctvCam] = useState<1 | 2 | 3>(1);
+  const [cctvTime, setCctvTime] = useState('');
+  const [cctvAutoCycle, setCctvAutoCycle] = useState(true);
 
   // Client Portal State
   const [clientPin, setClientPin] = useState('');
   const [clientAuthed, setClientAuthed] = useState(false);
+  const [milestones, setMilestones] = useState([
+    { id: 1, label: '1. Soil Excavation, Termite Spray & Raft Foundation', pct: 100, status: 'Verified Done ✅' },
+    { id: 2, label: '2. Concrete Columns, Beams & Roof Slab (Grade-60 Grey)', pct: 100, status: 'Verified Done ✅' },
+    { id: 3, label: '3. Electrical Conduit Wiring, Panels & Distribution Box', pct: 80, status: '80% In Progress 🔄' },
+    { id: 4, label: '4. Sanitary Plumbing, Hot/Cold Hydrostatic Testing', pct: 70, status: '70% Pressure Tested 🔄' },
+    { id: 5, label: '5. Porcelain Floor Tiling & Spanish Wall Cladding', pct: 30, status: '30% Active Laying 🔄' }
+  ]);
 
-  // CAD Blueprint Renderer
+  // Live Auto-scroll in AI Chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, aiTyping]);
+
+  // CCTV Live Timer Counter
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCctvTime(now.toLocaleTimeString('en-US', { timeZone: 'Asia/Karachi', hour12: false }) + ' PKT');
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // CCTV Auto-Cycle
+  useEffect(() => {
+    if (!cctvAutoCycle) return;
+    const interval = setInterval(() => {
+      setCctvCam((prev) => (prev === 3 ? 1 : ((prev + 1) as any)));
+    }, 9000);
+    return () => clearInterval(interval);
+  }, [cctvAutoCycle]);
+
+  // Text-To-Speech synthesis
+  const speakText = (text: string) => {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ur-PK';
+    utterance.rate = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Live AI Consultation
+  async function handleSendMsg() {
+    if (!inputMsg.trim()) return;
+    const userText = inputMsg;
+    const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    setMessages((prev) => [...prev, { sender: 'user', text: userText, time: timeNow }]);
+    setInputMsg('');
+    setAiTyping(true);
+
+    const prompt = `
+You are the Official Live Autonomous AI Engineer for Bin Taha Associates & Builders (Led by CEO Taha Mubeen Bhutta), operating from Block J, Commercial Broadway, LDA Avenue 1, Lahore.
+The user is asking: "${userText}".
+Provide a helpful, professional, authoritative response covering Lahore real estate, civil engineering, LDA bylaws, or current market rates. Keep your tone respectful, clear, and proactive. Mention CEO Taha Mubeen Bhutta (0321-9404812) for site booking if appropriate.
+`;
+
+    try {
+      const reply = await askBunyadAI(prompt);
+      setAiTyping(false);
+      setMessages((prev) => [...prev, { sender: 'ai', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      speakText(reply);
+    } catch {
+      setAiTyping(false);
+      const fallback = `Aapki request receive ho gayi hai. Bin Taha Associates ke CEO Taha Mubeen Bhutta direct helpline 0321-9404812 par available hain ya turnkey service book kar sakte hain.`;
+      setMessages((prev) => [...prev, { sender: 'ai', text: fallback, time: timeNow }]);
+      speakText(fallback);
+    }
+  }
+
+  // Interactive CAD Blueprint Canvas Drawing
   useEffect(() => {
     if (activeTab !== 'cad') return;
     const canvas = canvasRef.current;
@@ -61,7 +147,7 @@ export default function AgentPortal() {
     ctx.fillStyle = '#060b13';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Architectural Grid Lines
+    // Architectural Grid
     ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 25) {
@@ -76,16 +162,23 @@ export default function AgentPortal() {
     ctx.lineWidth = 3;
     ctx.strokeRect(60, 50, 780, 380);
 
-    // Header Title
+    // Title
     ctx.fillStyle = '#fcd34d';
     ctx.font = 'bold 13px monospace';
-    ctx.fillText('BIN TAHA ASSOCIATES & BUILDERS • ARCHITECTURAL CAD ENGINE', 80, 32);
+    ctx.fillText('BIN TAHA ASSOCIATES & BUILDERS • INTERACTIVE ARCHITECTURAL CAD STUDIO', 80, 32);
+
+    const totalArea = cadWidth * cadLength;
+    const estCost = totalArea * (cadStoreys === 1 ? 3200 : 4200);
 
     ctx.fillStyle = '#38bdf8';
     ctx.font = '11px monospace';
-    ctx.fillText(`PLOT SCALE: ${cadWidth} FT (FRONT) x ${cadLength} FT (DEPTH) | TOTAL: ${cadWidth * cadLength} SQ FT`, 80, 455);
+    ctx.fillText(
+      `PLOT: ${cadWidth} FT x ${cadLength} FT | AREA: ${totalArea} SQ FT | STOREYS: ${cadStoreys} | EST. GREY: PKR ${estCost.toLocaleString()}`,
+      80,
+      455
+    );
 
-    // Layout Draw based on Option
+    // Layout Draw
     if (cadOption === 1) {
       drawRoom(ctx, 80, 70, 320, 110, '#10b981', 'CAR PORCH & LAWN', `${Math.round(cadWidth * 0.45)}' x 16'`);
       drawRoom(ctx, 420, 70, 400, 110, '#3b82f6', 'DRAWING / GUEST ROOM', `14' x 16'`);
@@ -103,7 +196,7 @@ export default function AgentPortal() {
       drawRoom(ctx, 80, 200, 740, 120, '#f59e0b', 'DOUBLE HEIGHT CENTRAL LOBBY', `${cadWidth - 4}' x 18'`);
       drawRoom(ctx, 80, 340, 740, 75, '#8b5cf6', 'PRESIDENTIAL SUITE & SPA', `${cadWidth - 4}' x 18'`);
     }
-  }, [activeTab, cadWidth, cadLength, cadOption]);
+  }, [activeTab, cadWidth, cadLength, cadOption, cadStoreys]);
 
   function drawRoom(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string, title: string, dim: string) {
     ctx.fillStyle = color;
@@ -133,6 +226,7 @@ export default function AgentPortal() {
     link.click();
   }
 
+  // Booking submit to Supabase
   async function handleBookService(e: React.FormEvent) {
     e.preventDefault();
     if (!bookingForm.name || !bookingForm.phone || !bookingForm.location) {
@@ -164,29 +258,23 @@ export default function AgentPortal() {
 
   return (
     <div className="space-y-6">
-      {/* Schema / Local SEO Geo Anchors */}
-      <div className="hidden">
-        <h2>Bin Taha Associates &amp; Builders - Turnkey Construction Contractors Lahore</h2>
-        <p>PEC Category C registered construction company in LDA Avenue 1, Jubilee Town, Raiwind Road, DHA Lahore. Led by CEO Taha Mubeen Bhutta.</p>
-      </div>
-
-      {/* Main Command Console Header */}
+      {/* Header Banner */}
       <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
-              PEC CATEGORY C REGISTERED
+              LIVE AUTONOMOUS AI &amp; CIVIL GRID
             </span>
             <span className="font-mono text-[10px] text-cyan/70">
-              LAHORE TURNKEY CIVIL DIVISION
+              BIN TAHA ASSOCIATES VIP COMMAND
             </span>
           </div>
           <h2 className="font-display text-xl sm:text-2xl font-bold text-platinum flex items-center gap-2">
             <Building2 className="h-6 w-6 text-cyan" />
-            Bin Taha Turnkey Construction &amp; Civil Engineering Suite
+            Bin Taha PropTech Autonomous Studio &amp; AI Engineering
           </h2>
           <p className="text-xs text-platinum/70 max-w-2xl leading-relaxed">
-            Autonomous CAD blueprints, Grade-60 civil material procurement, remote CCTV telemetry, and escrow milestone safety supervised directly by <strong>CEO {CEO_NAME}</strong>.
+            Live dynamic CAD rendering, real-time voice &amp; text AI consultation, optical site telemetry, and 100% verified escrow construction.
           </p>
         </div>
 
@@ -199,7 +287,7 @@ export default function AgentPortal() {
             <Sparkles className="h-4 w-4" /> Book Turnkey Project
           </button>
           <a
-            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I want to discuss a turnkey construction project in Lahore.`)}
+            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I want to discuss a construction project in Lahore.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost flex items-center gap-1.5 py-2 px-4 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/10"
@@ -212,9 +300,10 @@ export default function AgentPortal() {
       {/* Navigation Sub-Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-cyan/15 pb-2">
         {[
+          { id: 'ai-agent', label: 'Autonomous AI Companion', icon: Bot },
           { id: 'services', label: '15 Civil Verticals', icon: HardHat },
-          { id: 'cad', label: '2D Architectural CAD Studio', icon: Compass },
-          { id: 'cctv', label: '24/7 Live Site CCTV Stream', icon: Video },
+          { id: 'cad', label: 'Interactive 2D CAD Studio', icon: Compass },
+          { id: 'cctv', label: '24/7 Optical CCTV Telemetry', icon: Video },
           { id: 'client', label: 'Client Telemetry & Milestone Vault', icon: ShieldCheck }
         ].map((tab) => (
           <button
@@ -232,7 +321,109 @@ export default function AgentPortal() {
         ))}
       </div>
 
-      {/* TAB 1: 15 Core Civil Operations Grid */}
+      {/* TAB 1: AUTONOMOUS LIVE AI COMPANION (VOICE & TEXT) */}
+      {activeTab === 'ai-agent' && (
+        <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan/15 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-cyan/10 border border-cyan/30 text-cyan">
+                <Bot className="h-5 w-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-display text-sm font-bold text-cyan">
+                  Bin Taha Autonomous Engineering Copilot
+                </h3>
+                <p className="font-mono text-[10px] text-platinum/60">
+                  REAL-TIME GEMINI ENGINE • CONVERSATIONAL VOICE &amp; TEXT
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-xs font-mono transition cursor-pointer ${
+                  voiceEnabled
+                    ? 'border-emerald-400 bg-emerald-950/40 text-emerald-300'
+                    : 'border-cyan/20 text-platinum/50 hover:text-cyan'
+                }`}
+              >
+                {voiceEnabled ? <Volume2 className="h-3.5 w-3.5 text-emerald-400" /> : <VolumeX className="h-3.5 w-3.5" />}
+                {voiceEnabled ? 'Voice Output ON' : 'Voice Output OFF'}
+              </button>
+            </div>
+          </div>
+
+          {/* Chat Window */}
+          <div className="h-[360px] overflow-y-auto rounded-xl border border-cyan/20 bg-[#040810] p-4 space-y-3">
+            {messages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                    m.sender === 'user'
+                      ? 'bg-cyan/20 border border-cyan/40 text-cyan rounded-tr-none'
+                      : 'bg-obsidian/90 border border-cyan/15 text-platinum/90 rounded-tl-none shadow-md'
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{m.text}</p>
+                </div>
+                <span className="mt-1 font-mono text-[9px] text-platinum/40 px-1">{m.time}</span>
+              </div>
+            ))}
+            {aiTyping && (
+              <div className="flex items-center gap-2 text-cyan font-mono text-xs p-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Autonomous Agent is analyzing engineering bylaws &amp; rates...
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Quick Preset Prompts */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[
+              '5 Marla complete grey structure cost in LDA Avenue 1?',
+              'What are LDA mandatory front & rear setback rules?',
+              'Grade-60 steel vs commercial grade difference?',
+              'How does Bin Taha 100% Escrow milestone protect me?'
+            ].map((preset, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => { setInputMsg(preset); }}
+                className="rounded-full border border-cyan/20 bg-cyan/5 px-3 py-1 font-mono text-[10px] text-cyan/80 hover:bg-cyan/15 cursor-pointer"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+
+          {/* Chat Input Bar */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={inputMsg}
+              onChange={(e) => setInputMsg(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMsg()}
+              placeholder="Ask anything about construction, blueprints, LDA transfer, or DC rates..."
+              className="flex-1 rounded-lg border border-cyan/30 bg-obsidian/90 px-4 py-2.5 text-xs text-platinum placeholder:text-cyan/30 outline-none focus:border-cyan"
+            />
+            <button
+              type="button"
+              onClick={handleSendMsg}
+              className="btn-cyan px-5 py-2.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-cyan-glow"
+            >
+              <Send className="h-4 w-4" /> Send
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: 15 Core Civil Operations Grid */}
       {activeTab === 'services' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {CIVIL_SERVICES.map((s) => (
@@ -280,17 +471,17 @@ export default function AgentPortal() {
         </div>
       )}
 
-      {/* TAB 2: Architectural 2D CAD Studio */}
+      {/* TAB 3: Interactive 2D CAD Studio */}
       {activeTab === 'cad' && (
         <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan/15 pb-3">
             <div>
               <h3 className="font-display text-base font-bold text-cyan flex items-center gap-2">
                 <Compass className="h-5 w-5 text-cyan" />
-                Professional 2D CAD Layout Engine
+                Live Dynamic 2D CAD Layout Engine
               </h3>
               <p className="text-xs text-platinum/60">
-                Mathematical architectural zoning adhering strictly to LDA Building Regulations 2026.
+                Adjust sliders to dynamically redraw structural walls and compute LDA setback clearances.
               </p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -311,24 +502,46 @@ export default function AgentPortal() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <label>
-              <span className="font-mono text-[10px] uppercase text-cyan/70">Plot Front Width (Ft)</span>
+              <div className="flex justify-between text-[10px] font-mono uppercase text-cyan/70">
+                <span>Front Width</span>
+                <span className="text-cyan font-bold">{cadWidth} FT</span>
+              </div>
               <input
-                type="number"
+                type="range"
+                min="20"
+                max="75"
                 value={cadWidth}
-                onChange={(e) => setCadWidth(Math.max(15, Number(e.target.value)))}
-                className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 font-mono text-sm text-cyan outline-none focus:border-cyan"
+                onChange={(e) => setCadWidth(Number(e.target.value))}
+                className="mt-2 w-full accent-cyan cursor-pointer"
               />
             </label>
             <label>
-              <span className="font-mono text-[10px] uppercase text-cyan/70">Plot Length / Depth (Ft)</span>
+              <div className="flex justify-between text-[10px] font-mono uppercase text-cyan/70">
+                <span>Plot Depth</span>
+                <span className="text-cyan font-bold">{cadLength} FT</span>
+              </div>
               <input
-                type="number"
+                type="range"
+                min="35"
+                max="120"
                 value={cadLength}
-                onChange={(e) => setCadLength(Math.max(20, Number(e.target.value)))}
-                className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 font-mono text-sm text-cyan outline-none focus:border-cyan"
+                onChange={(e) => setCadLength(Number(e.target.value))}
+                className="mt-2 w-full accent-cyan cursor-pointer"
               />
+            </label>
+            <label>
+              <span className="font-mono text-[10px] uppercase text-cyan/70">Floors</span>
+              <select
+                value={cadStoreys}
+                onChange={(e) => setCadStoreys(Number(e.target.value))}
+                className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none"
+              >
+                <option value={1}>Single Storey</option>
+                <option value={2}>Double Storey (G + 1)</option>
+                <option value={3}>Triple Storey (G + 2)</option>
+              </select>
             </label>
             <div className="flex items-end">
               <button
@@ -336,7 +549,7 @@ export default function AgentPortal() {
                 onClick={downloadCadBlueprint}
                 className="btn-cyan w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-cyan-glow cursor-pointer"
               >
-                <Download className="h-4 w-4" /> Download CAD JPEG Blueprint
+                <Download className="h-4 w-4" /> Download CAD JPEG
               </button>
             </div>
           </div>
@@ -352,27 +565,37 @@ export default function AgentPortal() {
         </div>
       )}
 
-      {/* TAB 3: 24/7 Live Site CCTV Stream */}
+      {/* TAB 4: 24/7 Optical CCTV Telemetry Stream */}
       {activeTab === 'cctv' && (
         <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan/15 pb-3">
             <div>
               <h3 className="font-display text-base font-bold text-cyan flex items-center gap-2">
                 <Video className="h-5 w-5 text-cyan animate-pulse" />
-                Live 24/7 Optical Site Surveillance Hub
+                Live 24/7 Remote CCTV Optical Site Telemetry
               </h3>
               <p className="text-xs text-platinum/60">
-                Encrypted optical feed streaming live construction milestones for overseas and local clients.
+                Real-time optical feed streaming live construction milestones for overseas and local clients.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
-              <span className="font-mono text-xs text-red-400 font-bold">1080P RTSP ENCRYPTED</span>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-xs font-mono text-platinum/70 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cctvAutoCycle}
+                  onChange={(e) => setCctvAutoCycle(e.target.checked)}
+                  className="accent-cyan"
+                />
+                Auto-Cycle (9s)
+              </label>
+              <div className="flex items-center gap-1.5 font-mono text-xs text-red-400 font-bold bg-red-950/30 border border-red-500/40 px-3 py-1 rounded-lg">
+                <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+                LIVE PKT
+              </div>
             </div>
           </div>
 
           <div className="relative h-[420px] w-full rounded-xl border border-cyan/40 bg-obsidian overflow-hidden flex flex-col justify-between p-4 shadow-2xl">
-            {/* Background Simulated Feed */}
             <div
               className="absolute inset-0 bg-cover bg-center transition-all duration-700 opacity-60"
               style={{
@@ -386,24 +609,22 @@ export default function AgentPortal() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian/70 pointer-events-none" />
 
-            {/* Top Telemetry Overlay */}
             <div className="relative z-10 flex justify-between items-center text-xs font-mono">
               <div className="rounded-lg bg-obsidian/90 px-3 py-1.5 border border-cyan/30 text-cyan">
                 CAM 0{cctvCam}: {cctvCam === 1 ? 'Front Elevation & Porch Raft' : cctvCam === 2 ? 'Active Roof Lintel & Slab' : 'Grade-60 Steel Storage Yard'}
               </div>
               <div className="rounded-lg bg-obsidian/90 px-3 py-1.5 border border-red-500/40 text-red-400 font-bold">
-                REC ● TELEMETRY LAHORE PKT
+                {cctvTime || 'LIVE TELEMETRY'}
               </div>
             </div>
 
-            {/* Bottom Controls */}
             <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-t border-cyan/15 pt-3">
               <div className="flex gap-2">
                 {[1, 2, 3].map((camNum) => (
                   <button
                     key={camNum}
                     type="button"
-                    onClick={() => setCctvCam(camNum as any)}
+                    onClick={() => { setCctvCam(camNum as any); setCctvAutoCycle(false); }}
                     className={`rounded-lg px-3 py-1.5 text-xs font-mono font-bold transition cursor-pointer ${
                       cctvCam === camNum
                         ? 'bg-cyan text-obsidian shadow-cyan-glow'
@@ -415,14 +636,14 @@ export default function AgentPortal() {
                 ))}
               </div>
               <span className="font-mono text-[11px] text-platinum/60">
-                Supervised by Bin Taha Security Grid
+                256-Bit SSL Telemetry Grid • Supervised by Bin Taha
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 4: Client Telemetry & Milestone Vault */}
+      {/* TAB 5: Client Telemetry & Milestone Vault */}
       {activeTab === 'client' && (
         <div className="glass rounded-xl p-5 border border-cyan/30 shadow-cyan-glow space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-cyan/15 pb-3">
@@ -439,7 +660,7 @@ export default function AgentPortal() {
               <div className="flex items-center gap-2">
                 <input
                   type="password"
-                  placeholder="PIN (Demo: 1234)"
+                  placeholder="Enter PIN (1234)"
                   value={clientPin}
                   onChange={(e) => setClientPin(e.target.value)}
                   className="rounded-lg border border-cyan/30 bg-obsidian/80 px-3 py-1.5 font-mono text-xs text-cyan outline-none w-36"
@@ -447,8 +668,11 @@ export default function AgentPortal() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (clientPin === '1234' || clientPin.length >= 4) setClientAuthed(true);
-                    else alert('Enter demo PIN 1234');
+                    if (clientPin === '1234' || clientPin.length >= 4) {
+                      setClientAuthed(true);
+                    } else {
+                      alert('Please enter valid PIN (Demo: 1234)');
+                    }
                   }}
                   className="btn-cyan py-1.5 px-3 text-xs font-bold cursor-pointer"
                 >
@@ -478,14 +702,8 @@ export default function AgentPortal() {
           </div>
 
           <div className="space-y-3 pt-2">
-            {[
-              { label: '1. Soil Excavation, Termite Spray & Raft Foundation', pct: 100, status: 'Verified Done ✅' },
-              { label: '2. Concrete Columns, Beams & Roof Slab (Grade-60 Grey)', pct: 100, status: 'Verified Done ✅' },
-              { label: '3. Electrical Conduit Wiring, Panels & Distribution Box', pct: 80, status: '80% In Progress 🔄' },
-              { label: '4. Sanitary Plumbing, Hot/Cold Hydrostatic Testing', pct: 70, status: '70% Pressure Tested 🔄' },
-              { label: '5. Porcelain Floor Tiling & Spanish Wall Cladding', pct: 30, status: '30% Active Laying 🔄' }
-            ].map((m) => (
-              <div key={m.label} className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3">
+            {milestones.map((m) => (
+              <div key={m.id} className="rounded-lg border border-cyan/15 bg-obsidian/40 p-3">
                 <div className="flex justify-between text-xs font-mono mb-1.5">
                   <span className="text-platinum/80">{m.label}</span>
                   <span className="text-cyan font-bold">{m.status}</span>
