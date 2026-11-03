@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo, memo } from 'react';
-import { motion, AnimatePresence } from '@/lib/motion';
 import {
   Building2, Search, Heart, MapPin, Phone, MessageCircle,
-  TrendingUp, Calculator, ShieldCheck, Filter, X, ExternalLink,
-  Coins, Sparkles, CheckCircle2, Home, Landmark, Loader2
+  Coins, Sparkles, X, Calculator, Loader2
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -534,8 +532,61 @@ function SocietyDirectory() {
       )}
 
       {/* Property Detail Modal */}
-      <AnimatePresence>
-        {detailModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-md p-4">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+      {detailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-md p-4">
+          <div className="glass-strong w-full max-w-lg rounded-2xl border border-cyan/40 p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setDetailModal(null)}
+              className="absolute top-4 right-4 text-platinum/50 hover:text-cyan cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="h-56 w-full rounded-xl overflow-hidden border border-cyan/30">
+              <img src={detailModal.img} alt={detailModal.title} className="h-full w-full object-cover" />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="chip border-cyan/40 bg-cyan/10 text-cyan text-xs font-mono font-bold">
+                {detailModal.type}
+              </span>
+              <span className="font-display text-xl font-black neon-text">{detailModal.price}</span>
+            </div>
+
+            <div>
+              <h3 className="font-display text-base font-bold text-platinum">{detailModal.title}</h3>
+              <p className="font-mono text-xs text-rose-400 flex items-center gap-1 mt-1">
+                <MapPin className="h-3.5 w-3.5" /> {detailModal.society}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-cyan/15 bg-obsidian/70 p-3.5 text-xs text-platinum/80 leading-relaxed space-y-1">
+              <h4 className="font-mono text-[10px] uppercase text-cyan font-bold">Verified Specifications:</h4>
+              <p>{detailModal.desc}</p>
+            </div>
+
+            <div className="pt-2 grid grid-cols-2 gap-3">
+              <a
+                href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, Inquiry about listing: "${detailModal.title}" (${detailModal.society})`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-cyan flex items-center justify-center gap-2 py-2.5 text-xs font-bold"
+              >
+                <MessageCircle className="h-4 w-4 text-emerald-400" /> WhatsApp CEO
+              </a>
+              <a
+                href={`tel:${CEO_PHONE}`}
+                className="btn-ghost flex items-center justify-center gap-2 py-2.5 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15"
+              >
+                <Phone className="h-4 w-4" /> Call Direct
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default memo(SocietyDirectory);
