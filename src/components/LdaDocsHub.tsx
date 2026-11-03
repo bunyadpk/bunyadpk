@@ -1,9 +1,9 @@
 import { memo, useState } from 'react';
 import { motion, AnimatePresence } from '@/lib/motion';
 import {
-  FileText, Download, Gavel, Home, ShieldCheck, Scale,
-  Building, Droplet, CloudRain, Scissors, Layers, CheckCircle2,
-  FolderArchive, MessageCircle, ExternalLink, Search
+  FileText, Download, Gavel, Scale,
+  Building, Droplet, CloudRain, Scissors, Layers,
+  FolderArchive, MessageCircle, Search
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
 
@@ -43,7 +43,7 @@ const BYLAW_HIGHLIGHTS = [
     icon: Building,
     title: 'Maximum Heights & Storeys',
     color: 'text-amber-400',
-    desc: 'Standard residential plots permit up to 38 ft (3 storeys) on roads up to 25 ft ROW. 10 Marla and 1 Kanal plots permit up to 45 ft (4 storeys, excluding basement) with a minimum clear storey height of 9 ft 6 in.'
+    desc: 'Standard residential plots permit up to 38 ft (3 storeys) on roads up to 25 ft ROW[cite: 3]. 10 Marla and 1 Kanal plots permit up to 45 ft (4 storeys, excluding basement) with a minimum clear storey height of 9 ft 6 in[cite: 3, 5].'
   },
   {
     icon: Scale,
@@ -67,7 +67,7 @@ const BYLAW_HIGHLIGHTS = [
     icon: Layers,
     title: 'Plot Amalgamation Rules',
     color: 'text-purple-400',
-    desc: 'Two or more adjacent plots of the same land use category may be amalgamated side-by-side or back-to-back. The building regulations of the resultant aggregate plot size apply.'
+    desc: 'Two or more adjacent plots of the same land use category may be amalgamated side-by-side or back-to-back[cite: 2]. The building regulations of the resultant aggregate plot size apply[cite: 5].'
   },
   {
     icon: Scissors,
@@ -86,55 +86,6 @@ function LdaDocsHub() {
     const matchesSearch = !search || f.title.toLowerCase().includes(search.toLowerCase()) || f.desc.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
-
-  function downloadDoc(fileName: string, title: string) {
-    // Generates official draft template with Bin Taha legal verification headers
-    const textContent = `===========================================================================
-LAHORE DEVELOPMENT AUTHORITY (LDA) OFFICIAL APPLICATION DRAFT
-TITLE: ${title.toUpperCase()}
-SUPERVISED BY: BIN TAHA ASSOCIATES & BUILDERS
-CEO: TAHA MUBEEN BHUTTA | HELPLINE: 0321-9404812
-HQ: BLOCK J, COMMERCIAL BROADWAY, LDA AVENUE 1, LAHORE
-===========================================================================
-
-FILE / SCHEME DETAILS:
-Scheme Name: __________________________________________________
-Plot No: _______________________ Block: _______________________
-Category / Size: ________________ Allocation / Allotment Date: ____
-
-APPLICANT PARTICULARS:
-Full Name: ____________________________________________________
-Father / Husband Name: ________________________________________
-CNIC No: _______________________ Mobile / WhatsApp: ___________
-Current Residential Address: ___________________________________
-
-GROUNDS OF APPLICATION / REQUISITION:
-I/We, the undersigned, hereby formally submit this application for ${title} under LDA Building & Zoning Regulations 2026. All submitted enclosures are authentic and free of any legal litigation or encumbrances.
-
-ENCLOSURES ATTACHED:
-[ ] 1. Attested Copy of Allotment / Transfer Letter
-[ ] 2. Valid CNIC Copies of Allottee & Witnesses
-[ ] 3. Original Paid Bank Challan Copy
-[ ] 4. Non-Encumbrance / Ownership Affidavit on Judicial Stamp Paper
-[ ] 5. Site Plan / Possession Demarcation Slip (If applicable)
-
-Date: ________________________
-Signature of Applicant: ________________________
-Thumb Impression:       ________________________
-
-VERIFIED & FACILITATED BY:
-Bin Taha Legal & Corporate Advisory Desk
-LDA Avenue 1, Lahore
-`;
-
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName.replace('.pdf', '') + '_Template.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   return (
     <div className="space-y-6">
@@ -207,7 +158,7 @@ LDA Avenue 1, Lahore
               Verified Official LDA Forms Repository ({filteredForms.length} / 20)
             </h3>
             <p className="mt-0.5 text-xs text-platinum/60">
-              Single-click instant documentation generation and filing templates.
+              Single-click instant PDF download direct from verified public storage.
             </p>
           </div>
 
@@ -262,13 +213,13 @@ LDA Avenue 1, Lahore
               </div>
 
               <div className="mt-3 flex items-center gap-1.5 border-t border-cyan/10 pt-2.5">
-                <button
-                  type="button"
-                  onClick={() => downloadDoc(form.fileName, form.title)}
-                  className="btn-ghost flex-1 flex items-center justify-center gap-1 py-1 text-[11px] text-cyan border border-cyan/25 hover:bg-cyan/15 cursor-pointer"
+                <a
+                  href={`./assets/lda-forms/${encodeURIComponent(form.fileName)}`}
+                  download={form.fileName}
+                  className="btn-ghost flex-1 flex items-center justify-center gap-1 py-1 text-[11px] text-cyan border border-cyan/25 hover:bg-cyan/15 cursor-pointer text-center"
                 >
-                  <Download className="h-3 w-3" /> Template
-                </button>
+                  <Download className="h-3 w-3" /> PDF
+                </a>
                 <a
                   href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I need guidance regarding LDA Form #${form.id} (${form.title}).`)}
                   target="_blank"
@@ -282,31 +233,6 @@ LDA Avenue 1, Lahore
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Corporate Advisory Callout */}
-      <div className="glass rounded-xl p-5 border border-cyan/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-cyan/10 text-cyan border border-cyan/30">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <div>
-            <h4 className="font-display text-sm font-bold text-platinum">
-              Need Professional Filing or Legal Demarcation?
-            </h4>
-            <p className="text-xs text-platinum/60">
-              Bin Taha Associates provides one-window LDA processing, NDC issuance, and file transfer services.
-            </p>
-          </div>
-        </div>
-        <a
-          href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I require professional legal documentation and filing assistance for LDA Avenue 1.`)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-cyan flex shrink-0 items-center gap-2 py-2.5 px-4 text-xs font-bold"
-        >
-          <MessageCircle className="h-4 w-4 text-emerald-400" /> Consult CEO {CEO_PHONE}
-        </a>
       </div>
     </div>
   );
