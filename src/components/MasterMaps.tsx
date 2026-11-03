@@ -7,8 +7,8 @@ import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
 
 interface BlockCoord {
   name: string;
-  x: number; // percentage X
-  y: number; // percentage Y
+  x: number;
+  y: number;
   road: string;
 }
 
@@ -28,7 +28,6 @@ const BLOCK_REGISTRY: Record<string, BlockCoord> = {
 
 const BLOCKS_LIST = Object.keys(BLOCK_REGISTRY);
 
-// Verified official master map image URL
 const OFFICIAL_MASTER_MAP_URL = 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=2400&q=95';
 
 function MasterMaps() {
@@ -46,7 +45,6 @@ function MasterMaps() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Mouse Drag / Pan handlers
   function handleMouseDown(e: React.MouseEvent) {
     setIsDragging(true);
     setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
@@ -64,21 +62,18 @@ function MasterMaps() {
     setIsDragging(false);
   }
 
-  // Wheel Zoom
   function handleWheel(e: React.WheelEvent) {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 0.2 : -0.2;
     setScale((prev) => Math.min(4, Math.max(0.8, prev + zoomFactor)));
   }
 
-  // Block Select
   function handleSelectBlock(key: string) {
     setSelectedBlock(key);
     const b = BLOCK_REGISTRY[key];
     if (b) {
       setPin({ x: b.x, y: b.y, label: `${b.name} (${b.road})` });
       setScale(2);
-      // Center map towards block coordinate
       setPosition({
         x: (50 - b.x) * 8,
         y: (50 - b.y) * 8
@@ -86,7 +81,6 @@ function MasterMaps() {
     }
   }
 
-  // Search plot & block
   function handleSearchPlot(e?: React.FormEvent) {
     if (e) e.preventDefault();
     const q = searchQuery.trim().toUpperCase();
@@ -102,7 +96,6 @@ function MasterMaps() {
       setSelectedBlock(targetKey);
       const b = BLOCK_REGISTRY[targetKey];
 
-      // micro-offset based on plot number
       const pNum = parseInt(plotNo, 10) || 1;
       const offsetX = ((pNum % 7) - 3) * 1.5;
       const offsetY = (((pNum * 3) % 7) - 3) * 1.5;
@@ -113,7 +106,7 @@ function MasterMaps() {
       setPin({
         x: targetX,
         y: targetY,
-        label: `Plot #${plotNo} -${b.name}`
+        label: `Plot #${plotNo} - ${b.name}`
       });
 
       setScale(2.5);
@@ -174,7 +167,7 @@ function MasterMaps() {
         </div>
       </div>
 
-      {/* Search & Fast Jump Console */}
+      {/* Search Console */}
       <div className="glass rounded-xl p-4 space-y-3 border border-cyan/20">
         <form onSubmit={handleSearchPlot} className="flex flex-col sm:flex-row items-center gap-2">
           <select
@@ -228,13 +221,67 @@ function MasterMaps() {
               key={key}
               type="button"
               onClick={() => handleSelectBlock(key)}
-              className={`whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-mono font-medium transition cursor-pointer shrink-0 ${ selectedBlock === key ? 'bg-cyan text-obsidian font-bold shadow-cyan-glow' : 'bg-obsidian/60 text-platinum/70 border border-cyan/15 hover:border-cyan hover:text-cyan' }`} > {BLOCK_REGISTRY[key].name} {key === 'J' ? '★' : ''} </button> ))} </div> </div>  {/* Interactive Drag & Deep Zoom Canvas */} <div ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onWheel={handleWheel} className="relative h-[65vh] min-h-[520px] w-full rounded-2xl border-2 border-cyan/40 bg-[#040810] overflow-hidden shadow-2xl shadow-cyan/15 cursor-grab active:cursor-grabbing select-none" > {/* Helper Badge */} <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 rounded-xl border border-cyan/30 bg-obsidian/90 px-3 py-1.5 text-xs font-mono text-cyan backdrop-blur-md"> <Move className="h-3.5 w-3.5" /> Drag map to pan &bull; Mouse wheel to zoom ({Math.round(scale * 100)}\%) </div>  {/* Floating Zoom Buttons */} <div className="absolute top-4 right-4 z-20 flex flex-col gap-1.5 rounded-xl border border-cyan/30 bg-obsidian/90 p-1.5 backdrop-blur-md shadow-lg"> <button type="button" onClick={() => setScale((s) => Math.min(4, s + 0.3))} className="rounded-lg p-2 text-cyan hover:bg-cyan/20 cursor-pointer" title="Zoom In" > <ZoomIn className="h-4 w-4" /> </button> <button type="button" onClick={() => setScale((s) => Math.max(0.8, s - 0.3))} className="rounded-lg p-2 text-cyan hover:bg-cyan/20 cursor-pointer" title="Zoom Out" > <ZoomOut className="h-4 w-4" /> </button> <button type="button" onClick={handleResetView} className="px-2 py-1 text-[10px] font-mono font-bold text-platinum/70 hover:text-cyan cursor-pointer text-center" title="Reset" > 100\% </button> </div>  {/* Pan-Zoom Map Board */} <div style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              className={`whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-mono font-medium transition cursor-pointer shrink-0 ${
+                selectedBlock === key
+                  ? 'bg-cyan text-obsidian font-bold shadow-cyan-glow'
+                  : 'bg-obsidian/60 text-platinum/70 border border-cyan/15 hover:border-cyan hover:text-cyan'
+              }`}
+            >
+              {BLOCK_REGISTRY[key].name} {key === 'J' ? '★' : ''}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Interactive Drag & Deep Zoom Canvas */}
+      <div
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
+        className="relative h-[65vh] min-h-[520px] w-full rounded-2xl border-2 border-cyan/40 bg-[#040810] overflow-hidden shadow-2xl shadow-cyan/15 cursor-grab active:cursor-grabbing select-none"
+      >
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 rounded-xl border border-cyan/30 bg-obsidian/90 px-3 py-1.5 text-xs font-mono text-cyan backdrop-blur-md">
+          <Move className="h-3.5 w-3.5" /> Drag map to pan &bull; Mouse wheel to zoom ({Math.round(scale * 100)}%)
+        </div>
+
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-1.5 rounded-xl border border-cyan/30 bg-obsidian/90 p-1.5 backdrop-blur-md shadow-lg">
+          <button
+            type="button"
+            onClick={() => setScale((s) => Math.min(4, s + 0.3))}
+            className="rounded-lg p-2 text-cyan hover:bg-cyan/20 cursor-pointer"
+            title="Zoom In"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setScale((s) => Math.max(0.8, s - 0.3))}
+            className="rounded-lg p-2 text-cyan hover:bg-cyan/20 cursor-pointer"
+            title="Zoom Out"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleResetView}
+            className="px-2 py-1 text-[10px] font-mono font-bold text-platinum/70 hover:text-cyan cursor-pointer text-center"
+            title="Reset"
+          >
+            100%
+          </button>
+        </div>
+
+        <div
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transformOrigin: 'center center',
             transition: isDragging ? 'none' : 'transform 0.25s ease-out'
           }}
           className="relative w-full h-full flex items-center justify-center"
         >
-          {/* High Resolution Master Layout Image */}
           <img
             src={OFFICIAL_MASTER_MAP_URL}
             alt="Official Town Master Map"
@@ -242,14 +289,12 @@ function MasterMaps() {
             draggable={false}
           />
 
-          {/* Blueprint Precision Grid Overlay */}
           <div className="absolute inset-0 bg-[radial-gradient(#00f0ff_1px,transparent_1px)] [background-size:32px_32px] opacity-15 pointer-events-none" />
 
-          {/* Interactive Radar Pin Marker */}
           {pin && (
             <div
               className="absolute pointer-events-none z-10 -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${pin.x}\%`, top: `${pin.y}%` }}
+              style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
             >
               <div className="relative flex items-center justify-center">
                 <span className="absolute h-12 w-12 rounded-full bg-cyan/40 animate-ping" />
@@ -257,7 +302,6 @@ function MasterMaps() {
                 <span className="h-4 w-4 rounded-full border-2 border-white bg-rose-500 shadow-[0_0_15px_#f43f5e]" />
               </div>
 
-              {/* Pin Tooltip */}
               <div className="absolute left-1/2 top-7 -translate-x-1/2 whitespace-nowrap rounded-xl border border-cyan/50 bg-[#061224]/95 px-3 py-1.5 text-center shadow-2xl backdrop-blur-md">
                 <p className="font-mono text-[11px] font-bold text-cyan">{pin.label}</p>
                 <p className="font-mono text-[9px] text-platinum/60">Verified Sector Boundary</p>
@@ -266,7 +310,6 @@ function MasterMaps() {
           )}
         </div>
 
-        {/* Active Target Status Bar */}
         <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cyan/25 bg-obsidian/90 px-4 py-2 text-xs backdrop-blur-md">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -276,4 +319,59 @@ function MasterMaps() {
           </div>
 
           <a
-            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I
+            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I located ${pin ? pin.label : selectedBlock} on Bunyad Master Map. Please confirm plot availability.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-mono text-[11px] font-bold"
+          >
+            <MessageCircle className="h-3.5 w-3.5" /> Inquire on WhatsApp
+          </a>
+        </div>
+      </div>
+
+      {/* Specifications */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="glass rounded-xl p-4 border border-cyan/20 space-y-1.5 text-xs">
+          <h3 className="flex items-center gap-2 font-display text-sm font-bold text-cyan">
+            <MapPin className="h-4 w-4" /> Sector Specifications
+          </h3>
+          <p className="text-platinum/70 leading-relaxed">
+            • <strong>Sector:</strong> {currentInfo.name}<br />
+            • <strong>Main Access:</strong> {currentInfo.road}<br />
+            • <strong>Category:</strong> 100% On-Ground Verified Demarcation
+          </p>
+        </div>
+
+        <div className="glass rounded-xl p-4 border border-cyan/20 space-y-1.5 text-xs">
+          <h3 className="flex items-center gap-2 font-display text-sm font-bold text-emerald-400">
+            <ShieldCheck className="h-4 w-4" /> Legal NDC Approval
+          </h3>
+          <p className="text-platinum/70 leading-relaxed">
+            Complete town layout cross-matched with official master plan bylaws under direct supervision of <strong>CEO {CEO_NAME}</strong>.
+          </p>
+        </div>
+
+        <div className="glass rounded-xl p-4 border border-cyan/20 flex flex-col justify-between">
+          <div>
+            <h3 className="flex items-center gap-2 font-display text-sm font-bold text-cyan">
+              <Sparkles className="h-4 w-4" /> Onsite Demarcation
+            </h3>
+            <p className="mt-1 text-xs text-platinum/60">
+              Bin Taha onsite survey team will mark your plot on ground.
+            </p>
+          </div>
+          <a
+            href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, I need site inspection & demarcation for: "${currentInfo.name}" on Bunyad Master Plan.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-cyan mt-3 w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold cursor-pointer"
+          >
+            <MessageCircle className="h-3.5 w-3.5 text-emerald-400" /> Book Onsite Marking
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default memo(MasterMaps);
