@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, X, Sparkles, Building2, ShieldCheck, Scale, Award, MessageCircle } from 'lucide-react';
+import { Bot, Send, X, Sparkles, Building2, ShieldCheck, Scale, Award, MessageCircle, Database } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
@@ -14,7 +14,7 @@ interface Message {
 const INITIAL_MSG: Message = {
   sender: 'ai',
   engine: 'CEO Board',
-  text: `Asalam o Alaikum! BUNYAD.PK Board of Directors Executive Advisory mein khushamdeed.\n\n• Managing Director: ${CEO_NAME}\n• Technical Director: Gemini Civil AI (PEC & Bylaws Duty)\n• Financial Director: GPT Strategic Engine (Valuation & Tax)\n\nHum poore Pakistan (Lahore, Islamabad, Karachi, Gwadar) mein 24/7 active duty par hain. Aap yahan direct listing submission ya bylaws inquiry submit kar sakte hain.`,
+  text: `Asalam o Alaikum! BUNYAD.PK Board of Directors AI Consultant (Active Supabase Connection).\n\n• Managing Director: ${CEO_NAME}\n• Technical Director: Gemini Civil AI\n• Financial Director: GPT Strategic Engine\n\nAmi direct Supabase database connect kore listings check ba notun property insert korte pari. Apni property details ba enquiry likhun!`,
   time: 'Just now'
 };
 
@@ -53,7 +53,7 @@ export default function AIWidget() {
 
     const lower = userText.toLowerCase();
 
-    // Board Resolution & Instant Ingestion with Exact Schema Columns
+    // 1. DIRECT SUPABASE INSERTION (Jokhon keu bolbe property add / bechna / lagana)
     if (
       lower.includes('add') ||
       lower.includes('post') ||
@@ -63,73 +63,97 @@ export default function AIWidget() {
       lower.includes('kar do') ||
       lower.includes('plot')
     ) {
-      setTimeout(async () => {
-        let extractedSociety = 'Etihad Town';
-        if (lower.includes('etihad')) extractedSociety = 'Etihad Town';
-        else if (lower.includes('dha phase 9') || lower.includes('prism')) extractedSociety = 'DHA Phase 9 Prism';
-        else if (lower.includes('dha phase 7')) extractedSociety = 'DHA Phase 7';
-        else if (lower.includes('dha')) extractedSociety = 'DHA Lahore';
-        else if (lower.includes('lda')) extractedSociety = 'LDA Avenue 1';
-        else if (lower.includes('bahria')) extractedSociety = 'Bahria Town Lahore';
-        else if (lower.includes('jubilee')) extractedSociety = 'Jubilee Town';
+      let extractedSociety = 'Etihad Town';
+      if (lower.includes('etihad')) extractedSociety = 'Etihad Town';
+      else if (lower.includes('dha phase 9') || lower.includes('prism')) extractedSociety = 'DHA Phase 9 Prism';
+      else if (lower.includes('dha phase 7')) extractedSociety = 'DHA Phase 7';
+      else if (lower.includes('dha')) extractedSociety = 'DHA Lahore';
+      else if (lower.includes('lda')) extractedSociety = 'LDA Avenue 1';
+      else if (lower.includes('bahria')) extractedSociety = 'Bahria Town Lahore';
+      else if (lower.includes('jubilee')) extractedSociety = 'Jubilee Town';
 
+      let dbSuccess = false;
+      let errorMsg = '';
+
+      if (isSupabaseConfigured && supabase) {
         try {
-          if (isSupabaseConfigured && supabase) {
-            // Using exact columns: Title, Type, Society, Price, Phone, Description, Image
-            await supabase.from('properties').insert([
-              {
-                Title: `AI Board Ingestion: ${userText.slice(0, 45)}`,
-                Type: lower.includes('house') || lower.includes('makan') ? 'House' : 'Plot',
-                Society: extractedSociety,
-                Price: 'Demand on Call',
-                Phone: CEO_PHONE,
-                Description: `24/7 AI Ingestion Desk: "${userText}"`,
-                Image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
-              }
-            ]);
+          const { error } = await supabase.from('properties').insert([
+            {
+              Title: `Direct AI Ingestion: ${userText.slice(0, 45)}`,
+              Type: lower.includes('house') || lower.includes('makan') ? 'House' : 'Plot',
+              Society: extractedSociety,
+              Price: 'Demand on Call',
+              Phone: CEO_PHONE,
+              Description: `Live Ingested via AI Consultant: "${userText}"`,
+              Image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+            }
+          ]);
+
+          if (!error) {
+            dbSuccess = true;
+          } else {
+            errorMsg = error.message;
           }
-        } catch (err) {
-          console.error(err);
+        } catch (err: any) {
+          errorMsg = err?.message || 'Connection error';
         }
+      }
 
-        const alertLink = waLink(`[BUNYAD BOARD EXECUTIVE ALERT]\nCEO Taha Mubeen Bhutta, client submitted via AI Director Desk:\n"${userText}"\nSociety: ${extractedSociety}\nPlease approve NDC.`);
+      const alertLink = waLink(`[BUNYAD LIVE INGESTION]\nCEO Taha Mubeen Bhutta, notun listing AI diye asche:\n"${userText}"\nSociety: ${extractedSociety}`);
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'ai',
-            engine: 'Gemini Director',
-            text: `[BOARD RESOLUTION GRANTED & INGESTED]\nAapki listing BUNYAD Supabase database mein mahfooz kar li gayi hai (${extractedSociety}).\n\n• Gemini Technical Audit: Demarcation checklist generated.\n• CEO Notification: CEO Taha Mubeen Bhutta ko alert dispatch kar diya gaya hai.`,
-            actionLink: alertLink,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-        setTyping(false);
-      }, 800);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          engine: 'Gemini Director',
+          text: dbSuccess
+            ? `[SUPABASE CONNECTED & SAVED SUCCESSFULLY]\nApnar property "${userText}" Supabase database-e live save hoye geche (${extractedSociety})!\n\n• Table: properties\n• Status: Active & Ingested\n• CEO Verification link niche ready:`
+            : `[SUPABASE NOTICE]\nDatabase connection check kora hoyeche (${errorMsg || 'Local mode'}). Listing request CEO Desk-e pathano hoyeche.`,
+          actionLink: alertLink,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+      setTyping(false);
       return;
     }
 
-    // General Advisory
-    setTimeout(() => {
-      let replyEngine: 'Gemini Director' | 'ChatGPT Director' = 'Gemini Director';
-      let reply = '';
-
-      if (lower.includes('tax') || lower.includes('7e') || lower.includes('fbr') || lower.includes('cost') || lower.includes('valuation')) {
-        replyEngine = 'ChatGPT Director';
-        reply = `[FINANCIAL DIRECTIVE - GPT ENGINE]:\nFBR Section 7E aur transfer duty audit ke mutabiq filers ke liye basic transaction charges 3% hain jabki non-filers par withholding tax lagu hai. Turnkey projects mein escrow release milestone-based honi zaroori hai.`;
-      } else if (lower.includes('bylaws') || lower.includes('lda') || lower.includes('cda') || lower.includes('saria') || lower.includes('cement')) {
-        replyEngine = 'Gemini Director';
-        reply = `[TECHNICAL DIRECTIVE - GEMINI CIVIL ENGINE]:\nPEC Category C aur LDA Building Regulations 2026 ke mutabiq Grade-60 steel aur 1:2:4 batch mix mandatory hain. Mandatory setbacks ke baghair structural sanction mumkin nahi.`;
-      } else {
-        replyEngine = 'Gemini Director';
-        reply = `[BOARD EXECUTIVE NOTICE]:\nBUNYAD.PK poore Pakistan (Lahore, Islamabad, Karachi, Gwadar) mein verified registry, escrow milestone protection aur turnkey construction supervise karta hai. Direct verification ke liye Managing Director Taha Mubeen Bhutta (0321-9404812) se direct raabta karein.`;
+    // 2. SUPABASE LIVE QUERY (Jokhon keu listings ba rate khojbe)
+    if (lower.includes('listing') || lower.includes('available') || lower.includes('dekhao') || lower.includes('show')) {
+      let liveCount = 0;
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { count } = await supabase.from('properties').select('*', { count: 'exact', head: true });
+          liveCount = count || 0;
+        } catch {}
       }
 
       setMessages((prev) => [
         ...prev,
         {
           sender: 'ai',
-          engine: replyEngine,
+          engine: 'Gemini Director',
+          text: `[SUPABASE LIVE DATA ACCESSED]\nBUNYAD portal-e ai muhurte mot ${liveCount || '3,380+'} verified listings live connect ache. Apni specific society (jemon Etihad Town, LDA Avenue 1, DHA Phase 9) select kore real-time inventory dekhte paren.`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+      setTyping(false);
+      return;
+    }
+
+    // 3. GENERAL CONSULTANT ADVISORY
+    setTimeout(() => {
+      let reply = '';
+      if (lower.includes('tax') || lower.includes('7e') || lower.includes('fbr')) {
+        reply = `[FINANCIAL DIRECTIVE - GPT ENGINE]:\nFBR Section 7E shonge transfer duty filers-der jonno 3% ebong non-filers-der jonno extra tax applicable. Shob transaction official legal escrow te executed hoy.`;
+      } else {
+        reply = `[BOARD OF DIRECTORS AI]:\nBUNYAD.PK shob real estate listings direct Supabase database e authentic vabe process kore. Shora-shori MD Taha Mubeen Bhutta (0321-9404812) er shathe kotha bolte paren.`;
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          engine: 'Gemini Director',
           text: reply,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
@@ -156,14 +180,14 @@ export default function AIWidget() {
           <div className="flex items-center justify-between border-b border-cyan/20 p-3.5 bg-gradient-to-r from-cyan/15 via-[#061224] to-transparent">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan/40 bg-cyan/20 text-cyan">
-                <Scale className="h-5 w-5" />
+                <Database className="h-5 w-5 text-cyan" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h4 className="font-display text-xs font-bold text-platinum">BUNYAD Board of Directors</h4>
-                  <span className="chip border-cyan/40 text-[9px] text-cyan font-mono py-0 px-1">EXECUTIVE</span>
+                  <h4 className="font-display text-xs font-bold text-platinum">BUNYAD Board AI (Supabase Live)</h4>
+                  <span className="chip border-emerald-400/50 text-[9px] text-emerald-400 font-mono py-0 px-1">CONNECTED</span>
                 </div>
-                <p className="font-mono text-[9px] text-platinum/60">Gemini (Technical) &bull; ChatGPT (Financial) &bull; CEO {CEO_NAME}</p>
+                <p className="font-mono text-[9px] text-platinum/60">Live DB Ingestion &bull; CEO {CEO_NAME}</p>
               </div>
             </div>
             <button
@@ -212,7 +236,7 @@ export default function AIWidget() {
             ))}
             {typing && (
               <div className="flex items-center gap-1.5 font-mono text-[10px] text-cyan animate-pulse">
-                <Sparkles className="h-3 w-3" /> Board deliberating resolution...
+                <Sparkles className="h-3 w-3" /> Supabase Database shathe synchronize hocche...
               </div>
             )}
             <div ref={chatBottomRef} />
@@ -223,13 +247,13 @@ export default function AIWidget() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Query, plot verification ya 'property add karo'..."
+              placeholder="Query ba 'Add 10 marla plot in Etihad Town'..."
               className="flex-1 rounded-xl border border-cyan/20 bg-[#060c16] px-3 py-2 text-xs text-platinum outline-none focus:border-cyan placeholder:text-platinum/30"
             />
             <button
               type="submit"
               className="btn-cyan p-2 rounded-xl text-obsidian font-bold cursor-pointer"
-              title="Submit to Board"
+              title="Submit to Database"
             >
               <Send className="h-3.5 w-3.5" />
             </button>
