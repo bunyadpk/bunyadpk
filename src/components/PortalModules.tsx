@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { 
   Building2, PlusCircle, FileText, CheckCircle2, 
-  Send, X, Phone, Award, UserCheck
+  Send, X, Award, UserCheck
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME } from '@/lib/constants';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -12,46 +12,36 @@ interface PortalModulesProps {
 }
 
 const PAKISTAN_SOCIETIES = [
-  'LDA Avenue 1, Lahore',
-  'Jubilee Town, Lahore',
-  'DHA Phase 1, Lahore',
-  'DHA Phase 2, Lahore',
-  'DHA Phase 3, Lahore',
-  'DHA Phase 4, Lahore',
-  'DHA Phase 5, Lahore',
-  'DHA Phase 6, Lahore',
-  'DHA Phase 7, Lahore',
-  'DHA Phase 8, Lahore',
-  'DHA Phase 9 Prism, Lahore',
-  'DHA Rahbar Phase 11, Lahore',
-  'Bahria Town, Lahore',
-  'Bahria Orchard, Lahore',
-  'Izmir Town, Lahore',
-  'Lake City, Lahore',
-  'Valencia Town, Lahore',
-  'WAPDA Town, Lahore',
-  'Johar Town, Lahore',
-  'Model Town, Lahore',
-  'Gulberg, Lahore',
-  'Park View City, Lahore',
-  'Al-Kabir Town, Lahore',
-  'Etihad Town, Lahore',
-  'Central Park Housing, Lahore',
-  'LDA City, Lahore',
-  'DHA Islamabad / Rawalpindi',
-  'Bahria Town, Islamabad',
-  'Gulberg Greens, Islamabad',
-  'Faisal Hills, Islamabad',
-  'B-17 Multi Gardens, Islamabad',
-  'DHA City, Karachi',
-  'Bahria Town, Karachi',
-  'Clifton, Karachi',
-  'DHA Gujranwala',
-  'DHA Multan',
-  'Citi Housing, Multan',
-  'Citi Housing, Faisalabad',
-  'DHA Peshawar',
-  'Gwadar Golf City'
+  'LDA Avenue 1',
+  'Etihad Town',
+  'Jubilee Town',
+  'DHA Phase 1',
+  'DHA Phase 2',
+  'DHA Phase 3',
+  'DHA Phase 4',
+  'DHA Phase 5',
+  'DHA Phase 6',
+  'DHA Phase 7',
+  'DHA Phase 8',
+  'DHA Phase 9 Prism',
+  'DHA Rahbar Phase 11',
+  'Bahria Town Lahore',
+  'Bahria Orchard',
+  'Izmir Town',
+  'Lake City',
+  'Valencia Town',
+  'WAPDA Town',
+  'Johar Town',
+  'Model Town',
+  'Gulberg',
+  'Park View City',
+  'Al-Kabir Town',
+  'Kings Town',
+  'Central Park Housing Scheme',
+  'LDA City',
+  'DHA Islamabad',
+  'Bahria Town Islamabad',
+  'Bahria Town Karachi'
 ];
 
 export default function PortalModules({ activeModule, onClose }: PortalModulesProps) {
@@ -87,25 +77,34 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
     setSubmitting(true);
     try {
       if (isSupabaseConfigured && supabase) {
-        await supabase.from('properties').insert([
-          {
-            title: formData.title,
-            type: formData.type,
-            society: formData.society,
-            price: formData.price.startsWith('PKR') ? formData.price : `PKR ${formData.price}`,
-            phone: formData.phone || CEO_PHONE,
-            desc: formData.desc || 'Direct verified listing on BUNYAD.PK Portal.',
-            img: formData.img || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
-          }
-        ]);
+        // Exact column names matching Supabase: Title, Type, Society, Price, Phone, Description, Image
+        const payload = {
+          Title: formData.title,
+          Type: formData.type,
+          Society: formData.society,
+          Price: formData.price.startsWith('PKR') ? formData.price : `PKR ${formData.price}`,
+          Phone: formData.phone || CEO_PHONE,
+          Description: formData.desc || 'Direct verified listing on BUNYAD.PK Portal.',
+          Image: formData.img || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+        };
+
+        const { error } = await supabase.from('properties').insert([payload]);
+
+        if (error) {
+          console.error('Supabase Insert Error:', error);
+          alert(`Error saving listing: ${error.message}`);
+          return;
+        }
       }
+
       setSubmitted(true);
       setTimeout(() => {
         setSubmitted(false);
         onClose();
         window.location.reload();
       }, 1500);
-    } catch {
+    } catch (err: any) {
+      console.error(err);
       alert('Property submit ho gayi. Page reload ho raha hai.');
       onClose();
     } finally {
@@ -142,7 +141,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
             </div>
             <div className="space-y-3 text-xs leading-relaxed text-platinum/80">
               <p>
-                <strong>BUNYAD.PK</strong> Pakistan ka enterprise-grade PropTech portal hai, jise <strong>CEO {CEO_NAME}</strong> lead kar rahe hain. Lahore ke sath sath Islamabad, Karachi, Multan aur Gwadar ki mega housing schemes ka authenticated platform.
+                <strong>BUNYAD.PK</strong> Pakistan ka premier PropTech portal hai, jise <strong>CEO {CEO_NAME}</strong> supervise karte hain. Lahore ke 38 housing societies aur nationwide verified listings ka authenticated platform.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div className="rounded-xl border border-cyan/15 bg-obsidian/70 p-3.5 space-y-1">
@@ -150,7 +149,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                     <Award className="h-4 w-4" /> Nationwide Verification
                   </div>
                   <p className="text-[11px] text-platinum/70">
-                    LDA, CDA, RDA, SBCA, aur DHA authority certified documentation review.
+                    LDA, CDA, RDA aur DHA authority certified documentation review.
                   </p>
                 </div>
                 <div className="rounded-xl border border-cyan/15 bg-obsidian/70 p-3.5 space-y-1">
@@ -158,7 +157,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                     <UserCheck className="h-4 w-4" /> 100% Escrow Protection
                   </div>
                   <p className="text-[11px] text-platinum/70">
-                    Overseas Pakistanis ke liye milestone-based safe investment infrastructure.
+                    Milestone-based secure investment ecosystem.
                   </p>
                 </div>
               </div>
@@ -188,7 +187,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
               </div>
               <div className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3">
                 <h4 className="font-mono text-xs font-bold text-cyan mb-1">2. Direct CEO Oversight</h4>
-                <p>Tamam legal registry transfers aur escrow settlements CEO Taha Mubeen Bhutta ke direct supervision mein hoti hain.</p>
+                <p>Tamam legal transfers aur escrow settlements CEO Taha Mubeen Bhutta ke direct supervision mein execute hoti hain.</p>
               </div>
             </div>
           </div>
@@ -225,7 +224,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 10 Marla Corner Plot - Block J"
+                    placeholder="e.g. 5 Marla Hot Location Plot - Phase 1"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
@@ -262,7 +261,6 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                       className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
                     />
 
-                    {/* Auto-suggestion Dropdown */}
                     {showSocietySuggestions && filteredSocieties.length > 0 && (
                       <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-cyan/40 bg-obsidian p-1 shadow-2xl">
                         {filteredSocieties.map((soc) => (
@@ -287,7 +285,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                     <input
                       type="text"
                       required
-                      placeholder="e.g. 1.75 Crore"
+                      placeholder="e.g. 1.15 Crore"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
