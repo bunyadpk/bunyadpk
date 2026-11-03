@@ -12,7 +12,7 @@ import LeadForm from '@/components/LeadForm';
 import LdaDocsHub from '@/components/LdaDocsHub';
 import MasterMaps from '@/components/MasterMaps';
 import PortalModules from '@/components/PortalModules';
-import { Briefcase, ShieldCheck, PlusCircle, Building2, FileText, CheckCircle2 } from 'lucide-react';
+import { Briefcase, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import {
   supabase, isSupabaseConfigured, type MaterialRates, DEFAULT_RATES,
 } from '@/lib/supabase';
@@ -24,7 +24,6 @@ export default function App() {
   const [rates, setRates] = useState<MaterialRates>(DEFAULT_RATES);
   const [activeModal, setActiveModal] = useState<'about' | 'terms' | 'add-property' | null>(null);
 
-  // Stop auto-jumping to hash sections on reload — always force scroll to top
   useEffect(() => {
     if (window.location.hash) {
       window.history.replaceState(null, '', window.location.pathname);
@@ -77,43 +76,6 @@ export default function App() {
       <Ticker rates={rates} />
 
       <HudShell onReplay={handleReplayIntro} active={active} onNav={setActive}>
-        
-        {/* Quick Utility Launch Action Bar */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan/20 bg-[#040810]/80 p-3.5 backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <span className="chip border-emerald-400/40 text-emerald-400 font-mono text-[10px]">
-              BUNYAD.PK VERIFIED COMMAND
-            </span>
-            <span className="hidden sm:inline font-mono text-[11px] text-platinum/60">
-              Direct Access to Real Estate Operations
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveModal('add-property')}
-              className="btn-cyan flex items-center gap-1.5 py-1.5 px-3 text-xs font-bold shadow-cyan-glow cursor-pointer"
-            >
-              <PlusCircle className="h-3.5 w-3.5 text-obsidian" /> Add Property
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveModal('about')}
-              className="btn-ghost flex items-center gap-1.5 py-1.5 px-3 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15 cursor-pointer"
-            >
-              <Building2 className="h-3.5 w-3.5" /> About BUNYAD
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveModal('terms')}
-              className="btn-ghost flex items-center gap-1.5 py-1.5 px-3 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15 cursor-pointer"
-            >
-              <FileText className="h-3.5 w-3.5" /> Terms &amp; Bylaws
-            </button>
-          </div>
-        </div>
-
         {/* Command Deck / Home */}
         <section id="home" className="scroll-mt-24">
           <Overview materialCount={4} onOpenAI={openAI} />
@@ -190,7 +152,7 @@ export default function App() {
           <AdminPanel rates={rates} onRatesChange={setRates} />
         </section>
 
-        {/* Interactive Comprehensive Portal Footer */}
+        {/* Footer */}
         <footer className="mt-16 pt-8 border-t border-cyan/15 text-xs text-platinum/60 space-y-4 text-center">
           <div className="flex flex-wrap justify-center gap-4 text-xs font-bold text-cyan">
             <button type="button" onClick={() => setActiveModal('about')} className="hover:underline cursor-pointer">
