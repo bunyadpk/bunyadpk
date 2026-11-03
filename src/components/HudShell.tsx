@@ -12,7 +12,6 @@ import {
   ArrowUp
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME } from '@/lib/constants';
-import PortalModules from '@/components/PortalModules';
 
 export type NavId =
   | 'home'
@@ -28,16 +27,15 @@ interface HudShellProps {
   active: NavId;
   onNav: (id: NavId) => void;
   onReplay?: () => void;
+  onOpenModal?: (module: 'about' | 'terms' | 'add-property') => void;
 }
 
-export default function HudShell({ children, active, onNav, onReplay }: HudShellProps) {
-  const [activeModal, setActiveModal] = useState<'about' | 'terms' | 'add-property' | null>(null);
+export default function HudShell({ children, active, onNav, onReplay, onOpenModal }: HudShellProps) {
   const [showBackToHome, setShowBackToHome] = useState(false);
 
-  // Jab user scroll kare toh floating "Back to Home" button show karein
   useEffect(() => {
     function handleScroll() {
-      if (window.scrollY > 300) {
+      if (window.scrollY > 250) {
         setShowBackToHome(true);
       } else {
         setShowBackToHome(false);
@@ -50,6 +48,14 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
   function handleGoHome() {
     onNav('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleSectionNav(id: NavId) {
+    onNav(id);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   const navItems: { id: NavId; label: string; icon: any }[] = [
@@ -67,7 +73,7 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
       <header className="sticky top-0 z-40 border-b border-cyan/20 bg-obsidian/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:px-6">
           
-          {/* Brand Logo & Name - Clicks back to Home */}
+          {/* Brand Logo & Name */}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -99,12 +105,7 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => {
-                    onNav(item.id);
-                    if (item.id === 'home') {
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  }}
+                  onClick={() => handleSectionNav(item.id)}
                   className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs transition cursor-pointer ${
                     isActive
                       ? 'border border-cyan/40 bg-cyan/15 text-cyan shadow-cyan-glow font-bold'
@@ -122,9 +123,8 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setActiveModal('add-property')}
+              onClick={() => onOpenModal && onOpenModal('add-property')}
               className="btn-cyan flex items-center gap-1 py-1.5 px-3 text-xs font-bold shadow-cyan-glow cursor-pointer"
-              title="Add Property Listing"
             >
               <PlusCircle className="h-3.5 w-3.5 text-obsidian" />
               <span className="hidden sm:inline">Add Property</span>
@@ -132,9 +132,8 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
 
             <button
               type="button"
-              onClick={() => setActiveModal('about')}
+              onClick={() => onOpenModal && onOpenModal('about')}
               className="rounded-lg border border-cyan/30 bg-obsidian px-2.5 py-1.5 font-mono text-xs text-cyan hover:bg-cyan/10 transition cursor-pointer flex items-center gap-1"
-              title="About Us"
             >
               <Info className="h-3.5 w-3.5" />
               <span className="hidden md:inline">About</span>
@@ -142,9 +141,8 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
 
             <button
               type="button"
-              onClick={() => setActiveModal('terms')}
+              onClick={() => onOpenModal && onOpenModal('terms')}
               className="rounded-lg border border-cyan/30 bg-obsidian px-2.5 py-1.5 font-mono text-xs text-cyan hover:bg-cyan/10 transition cursor-pointer flex items-center gap-1"
-              title="Terms & Bylaws"
             >
               <FileText className="h-3.5 w-3.5" />
               <span className="hidden md:inline">Terms</span>
@@ -167,12 +165,7 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
             <button
               key={item.id}
               type="button"
-              onClick={() => {
-                onNav(item.id);
-                if (item.id === 'home') {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-              }}
+              onClick={() => handleSectionNav(item.id)}
               className={`whitespace-nowrap px-2.5 py-1 font-mono text-[11px] rounded-md transition ${
                 active === item.id
                   ? 'bg-cyan/20 text-cyan border border-cyan/30 font-bold'
@@ -190,21 +183,17 @@ export default function HudShell({ children, active, onNav, onReplay }: HudShell
         {children}
       </main>
 
-      {/* FLOATING "BACK TO HOME" BUTTON (Visible everywhere upon scrolling) */}
+      {/* Floating "Back to Home" Button */}
       {showBackToHome && (
         <button
           type="button"
           onClick={handleGoHome}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-cyan/50 bg-obsidian/90 px-4 py-2.5 text-xs font-mono font-bold text-cyan shadow-cyan-glow backdrop-blur-md transition-all hover:bg-cyan hover:text-obsidian hover:scale-105 cursor-pointer"
-          title="Return to Home Screen"
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full border border-cyan/50 bg-obsidian/95 px-4 py-2.5 text-xs font-mono font-bold text-cyan shadow-cyan-glow backdrop-blur-md transition-all hover:bg-cyan hover:text-obsidian hover:scale-105 cursor-pointer"
         >
           <ArrowUp className="h-4 w-4 animate-bounce" />
           <span>Back to Home</span>
         </button>
       )}
-
-      {/* Dynamic Popups for About, Terms & Add Property */}
-      <PortalModules activeModule={activeModal} onClose={() => setActiveModal(null)} />
     </div>
   );
 }
