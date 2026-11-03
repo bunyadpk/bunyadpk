@@ -1,17 +1,24 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+// Live Supabase Project Credentials with ENV fallback
+const LIVE_URL = 'https://ajrvlrvnxpatbculnwil.supabase.co';
+const LIVE_ANON_KEY = 'sb_publishable_ndHx-NyVhYxvDwfvBnK2iA_woPQhjJi';
 
-export const isSupabaseConfigured =
-  Boolean(url && anonKey && url.startsWith('http') && !url.includes('your-'));
+const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+const finalUrl = (envUrl && envUrl.startsWith('http') && !envUrl.includes('your-')) ? envUrl : LIVE_URL;
+const finalKey = (envKey && !envKey.includes('your-')) ? envKey : LIVE_ANON_KEY;
+
+export const isSupabaseConfigured = Boolean(finalUrl && finalKey);
 
 let client: SupabaseClient | null = null;
 
-// Crash-proof: if client creation throws, fall back to null silently.
 try {
   if (isSupabaseConfigured) {
-    client = createClient(url!, anonKey!, { auth: { persistSession: false } });
+    client = createClient(finalUrl, finalKey, {
+      auth: { persistSession: false },
+    });
   }
 } catch (err) {
   // eslint-disable-next-line no-console
