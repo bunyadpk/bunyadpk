@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from '@/lib/motion';
 import {
   Building2, Search, Heart, MapPin, Phone, MessageCircle,
   TrendingUp, Calculator, ShieldCheck, Filter, X, ExternalLink,
-  Coins, Sparkles, CheckCircle2, Home, Landmark
+  Coins, Sparkles, CheckCircle2, Home, Landmark, Loader2
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME, waLink } from '@/lib/constants';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -113,20 +113,43 @@ function SocietyDirectory() {
   const [roiGrowth, setRoiGrowth] = useState(12);
   const [roiYears, setRoiYears] = useState(3);
 
-  // Fetch properties from Supabase
+  // Full Supabase Batch Synchronization (Loads ALL Rows without cutoff)
   useEffect(() => {
-    async function loadProperties() {
+    async function fetchAllProperties() {
       if (!isSupabaseConfigured || !supabase) return;
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .limit(100);
+        let allRows: any[] = [];
+        let from = 0;
+        const step = 1000;
+        let keepGoing = true;
 
-        if (!error && data && data.length > 0) {
-          const formatted: PropertyItem[] = data.map((item: any) => ({
-            id: item.id || Math.random(),
+        while (keepGoing) {
+          const { data, error } = await supabase
+            .from('properties')
+            .select('*')
+            .range(from, from + step - 1);
+
+          if (error) {
+            console.error('Supabase fetch error:', error);
+            break;
+          }
+
+          if (data && data.length > 0) {
+            allRows = allRows.concat(data);
+            if (data.length < step) {
+              keepGoing = false;
+            } else {
+              from += step;
+            }
+          } else {
+            keepGoing = false;
+          }
+        }
+
+        if (allRows.length > 0) {
+          const formatted: PropertyItem[] = allRows.map((item: any, idx: number) => ({
+            id: item.id || item.ID || `prop-${idx}`,
             title: item.title || item.Title || 'Verified Property',
             type: item.type || item.Type || 'Plot',
             society: item.society || item.Society || 'Lahore',
@@ -138,15 +161,15 @@ function SocietyDirectory() {
           setProperties(formatted);
         }
       } catch (err) {
-        console.warn('Using fallback verified properties:', err);
+        console.warn('Fallback initialized:', err);
       } finally {
         setLoading(false);
       }
     }
-    loadProperties();
+
+    fetchAllProperties();
   }, []);
 
-  // Bookmark property toggle
   function toggleSaveProperty(id: string | number) {
     let updated: Array<string | number>;
     if (savedIds.includes(id)) {
@@ -158,7 +181,6 @@ function SocietyDirectory() {
     localStorage.setItem('bunyad_saved_properties', JSON.stringify(updated));
   }
 
-  // Filter properties
   const filtered = useMemo(() => {
     return properties.filter((item) => {
       const matchSoc =
@@ -187,7 +209,6 @@ function SocietyDirectory() {
     });
   }, [properties, selectedSociety, selectedCategory, searchQuery]);
 
-  // Inventory counts
   const totalCount = properties.length;
   const plotCount = properties.filter((p) => p.type.toLowerCase().includes('plot')).length;
   const houseCount = properties.filter(
@@ -200,10 +221,7 @@ function SocietyDirectory() {
       p.type.toLowerCase().includes('shop')
   ).length;
 
-  // ROI Result
   const roiValue = roiPrice * Math.pow(1 + roiGrowth / 100, roiYears);
-
-  // Saved bookmark items
   const savedItems = properties.filter((p) => savedIds.includes(p.id));
 
   return (
@@ -231,7 +249,7 @@ function SocietyDirectory() {
         <div className="space-y-1.5 max-w-2xl">
           <div className="flex items-center gap-2">
             <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
-              OFFICIAL VERIFIED REGISTRY
+              SUPABASE CLOUD SYNCED
             </span>
             <span className="font-mono text-[10px] text-cyan/70">
               BUNYAD PROPTECH PORTAL (بنیاد)
@@ -249,7 +267,9 @@ function SocietyDirectory() {
         {/* Live Inventory Counters */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto">
           <div className="rounded-xl border border-cyan/20 bg-obsidian/80 p-3 text-center min-w-[90px]">
-            <span className="block font-display text-xl font-black text-cyan">{totalCount}</span>
+            <span className="block font-display text-xl font-black text-cyan">
+              {loading ? <Loader2 className="h-5 w-5 animate-spin mx-auto text-cyan" /> : totalCount}
+            </span>
             <span className="font-mono text-[9px] uppercase text-platinum/50 font-bold">Total Listings</span>
           </div>
           <div className="rounded-xl border border-emerald-400/25 bg-obsidian/80 p-3 text-center min-w-[90px]">
@@ -519,63 +539,3 @@ function SocietyDirectory() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-md p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="glass-strong w-full max-w-lg rounded-2xl border border-cyan/40 p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto"
-            >
-              <button
-                type="button"
-                onClick={() => setDetailModal(null)}
-                className="absolute top-4 right-4 text-platinum/50 hover:text-cyan cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-
-              <div className="h-56 w-full rounded-xl overflow-hidden border border-cyan/30">
-                <img src={detailModal.img} alt={detailModal.title} className="h-full w-full object-cover" />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="chip border-cyan/40 bg-cyan/10 text-cyan text-xs font-mono font-bold">
-                  {detailModal.type}
-                </span>
-                <span className="font-display text-xl font-black neon-text">{detailModal.price}</span>
-              </div>
-
-              <div>
-                <h3 className="font-display text-base font-bold text-platinum">{detailModal.title}</h3>
-                <p className="font-mono text-xs text-rose-400 flex items-center gap-1 mt-1">
-                  <MapPin className="h-3.5 w-3.5" /> {detailModal.society}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-cyan/15 bg-obsidian/70 p-3.5 text-xs text-platinum/80 leading-relaxed space-y-1">
-                <h4 className="font-mono text-[10px] uppercase text-cyan font-bold">Verified Specifications:</h4>
-                <p>{detailModal.desc}</p>
-              </div>
-
-              <div className="pt-2 grid grid-cols-2 gap-3">
-                <a
-                  href={waLink(`Asalam o Alaikum CEO Taha Mubeen Bhutta, Inquiry about listing: "${detailModal.title}" (${detailModal.society})`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-cyan flex items-center justify-center gap-2 py-2.5 text-xs font-bold"
-                >
-                  <MessageCircle className="h-4 w-4 text-emerald-400" /> WhatsApp CEO
-                </a>
-                <a
-                  href={`tel:${CEO_PHONE}`}
-                  className="btn-ghost flex items-center justify-center gap-2 py-2.5 text-xs font-bold border border-cyan/30 text-cyan hover:bg-cyan/15"
-                >
-                  <Phone className="h-4 w-4" /> Call Direct
-                </a>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-export default memo(SocietyDirectory);
