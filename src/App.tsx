@@ -17,17 +17,26 @@ import {
 } from '@/lib/supabase';
 
 export default function App() {
-  // Directly false: har dafa website khulne par intro chalegi
   const [introDone, setIntroDone] = useState(false);
   const [active, setActive] = useState<NavId>('home');
   const [rates, setRates] = useState<MaterialRates>(DEFAULT_RATES);
 
+  // Stop auto-jumping to hash sections on reload — always force scroll to top
+  useEffect(() => {
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   function handleIntroComplete() {
     setIntroDone(true);
+    window.scrollTo(0, 0);
   }
 
   function handleReplayIntro() {
     setIntroDone(false);
+    window.scrollTo(0, 0);
   }
 
   const loadRates = useCallback(async () => {
@@ -39,7 +48,6 @@ export default function App() {
 
   useEffect(() => { loadRates(); }, [loadRates]);
 
-  // Track scroll position to update active navigation item
   useEffect(() => {
     const sections: NavId[] = ['home', 'directory', 'services', 'suite', 'lda-docs', 'master-maps', 'admin'];
     function onScroll() {
