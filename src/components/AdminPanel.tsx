@@ -10,6 +10,7 @@ import {
 import { CEO_NAME, waLink } from '@/lib/constants';
 import { MOCK_AGENTS, MOCK_LEADS, MOCK_PROPERTIES } from '@/data/mockDashboard';
 
+// CEO Secret Master PIN
 const ADMIN_PIN = '0321';
 
 type Panel = 'leads' | 'inventory' | 'rates';
@@ -29,7 +30,7 @@ export default function AdminPanel({
       setAuthed(true);
       setErr('');
     } else {
-      setErr('Incorrect PIN. Please enter 0321');
+      setErr('Access Denied: Invalid Security Key');
       setPin('');
     }
   }
@@ -42,7 +43,7 @@ export default function AdminPanel({
             <Lock className="h-6 w-6 animate-pulse" />
           </div>
           <h2 className="font-display text-lg font-bold text-platinum">CEO Secure Access</h2>
-          <p className="mt-1 text-xs text-platinum/60">Enter Master Key to access {CEO_NAME}'s command deck</p>
+          <p className="mt-1 text-xs text-platinum/60">Restricted Area • Bin Taha Associates Authorized Only</p>
 
           <form onSubmit={handleUnlock} className="mt-4">
             <input
@@ -53,9 +54,9 @@ export default function AdminPanel({
                 setPin(e.target.value);
                 if (err) setErr('');
               }}
-              placeholder="0321"
+              placeholder="••••"
               maxLength={8}
-              className="w-full rounded-md border border-cyan/30 bg-obsidian/80 py-2.5 text-center font-mono text-xl tracking-[0.4em] text-cyan focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan"
+              className="w-full rounded-md border border-cyan/30 bg-obsidian/80 py-2.5 text-center font-mono text-xl tracking-[0.5em] text-cyan focus:border-cyan focus:outline-none focus:ring-1 focus:ring-cyan"
             />
             {err && <p className="mt-2 text-xs font-mono text-red-400">{err}</p>}
             <button
