@@ -114,7 +114,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/85 backdrop-blur-md p-4 overflow-y-auto">
-      <div className={`glass-strong w-full ${activeModule === 'about' ? 'max-w-4xl' : 'max-w-2xl'} rounded-3xl border border-cyan/40 p-6 sm:p-8 shadow-2xl relative my-8 text-platinum max-h-[90vh] overflow-y-auto`}>
+      <div className={`glass-strong w-full ${activeModule === 'about' || activeModule === 'terms' ? 'max-w-4xl' : 'max-w-2xl'} rounded-3xl border border-cyan/40 p-6 sm:p-8 shadow-2xl relative my-8 text-platinum max-h-[90vh] overflow-y-auto`}>
         
         <button
           type="button"
@@ -213,7 +213,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                   </p>
                 </div>
                 <div className="rounded-xl border border-slate-800/80 bg-obsidian/50 p-4 space-y-1">
-                  <div className="font-mono text-xs font-bold text-white flex items-center gap-2">
+                  <div className="font-mono text-xs font-bold text-emerald-400">
                     <Award className="h-3.5 w-3.5 text-emerald-400" /> NDC &amp; Encumbrance Audit
                   </div>
                   <p className="text-[11px] text-platinum/70">
@@ -247,32 +247,109 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
           </div>
         )}
 
-        {/* ----------------- TERMS SECTION ----------------- */}
+        {/* ----------------- COMPREHENSIVE STATUTORY TERMS & BYLAWS ----------------- */}
         {activeModule === 'terms' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
-              <div className="p-2.5 rounded-xl bg-cyan/10 border border-cyan/30 text-cyan">
+          <div className="space-y-6">
+            
+            <div className="flex items-start gap-4 border-b border-cyan/20 pb-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan/40 bg-cyan/10 text-cyan shadow-cyan-glow">
                 <FileText className="h-6 w-6" />
               </div>
               <div>
-                <span className="chip border-cyan/40 bg-cyan/10 text-cyan font-mono text-[10px]">
-                  LEGAL COMPLIANCE 2026
+                <span className="inline-block rounded-full border border-cyan/30 bg-cyan/15 px-3 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-cyan">
+                  Statutory Regulatory Compliance &bull; Legal Framework 2026
                 </span>
-                <h3 className="font-display text-lg font-bold text-platinum mt-0.5">
-                  Terms &amp; Conditions | BUNYAD.PK
+                <h3 className="mt-1 font-display text-xl font-bold tracking-tight text-white sm:text-2xl">
+                  Terms, Fiduciary Bylaws &amp; Statutory Due Diligence
                 </h3>
+                <p className="mt-0.5 font-mono text-xs text-platinum/60">
+                  Operated under Bin Taha Associates &bull; Standard Legal Charter
+                </p>
               </div>
             </div>
-            <div className="space-y-3 text-xs text-platinum/80 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
-              <div className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3">
-                <h4 className="font-mono text-xs font-bold text-cyan mb-1">1. Pakistan Property Legal NDC</h4>
-                <p>Har property ka ownership record relevant authority (LDA, CDA, DHA) se physically cross-verify hota hai.</p>
+
+            <div className="space-y-4 max-h-[62vh] overflow-y-auto pr-2 text-xs text-platinum/80 leading-relaxed font-sans scrollbar-thin scrollbar-thumb-cyan/30">
+              
+              <div className="rounded-xl border border-cyan/20 bg-slate-900/60 p-4 space-y-1.5 hover:border-cyan/40 transition">
+                <div className="font-mono text-xs font-bold text-cyan flex items-center gap-2">
+                  <span>01.</span> Statutory Authority Title Clearance &amp; NDC Protocol
+                </div>
+                <p className="text-[11px] text-platinum/70 leading-relaxed">
+                  BUNYAD.PK par list hone wali har residential aur commercial property ka legal title relevant authority (LDA, DHA Lahore, CDA Islamabad, ya Town Municipal Administration) ke record se cross-verify kiya jata hai. No Demand Certificate (NDC), non-encumbrance status, sewerage/WASA clearance, aur LESCO/SNGPL dues clearance transfer execution se pehle verify kiye jate hain.
+                </p>
               </div>
-              <div className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3">
-                <h4 className="font-mono text-xs font-bold text-cyan mb-1">2. Direct CEO Oversight</h4>
-                <p>Tamam legal transfers aur escrow settlements CEO Taha Mubeen Bhutta ke direct supervision mein execute hoti hain.</p>
+
+              <div className="rounded-xl border border-cyan/20 bg-slate-900/60 p-4 space-y-1.5 hover:border-cyan/40 transition">
+                <div className="font-mono text-xs font-bold text-cyan flex items-center gap-2">
+                  <span>02.</span> Revenue Act Compliance &amp; Title Verification (Fard &amp; Intiqal)
+                </div>
+                <p className="text-[11px] text-platinum/70 leading-relaxed">
+                  Khasra, Khatauni, aur Aks Shajra ke revenue records ko Punjab Land Records Authority (PLRA) ke digital portal aur mauza patwar registers se tally kiya jata hai. Kisi bhi unapproved society ya disputed land par token agreement BUNYAD.PK par execute nahi kiya jata.
+                </p>
               </div>
+
+              <div className="rounded-xl border border-cyan/20 bg-slate-900/60 p-4 space-y-1.5 hover:border-cyan/40 transition">
+                <div className="font-mono text-xs font-bold text-cyan flex items-center gap-2">
+                  <span>03.</span> FBR &amp; Provincial Taxation Framework (Income Tax Ordinance 2001)
+                </div>
+                <p className="text-[11px] text-platinum/70 leading-relaxed">
+                  Tamam financial settlements government ke prescribed taxation slabs ke tehat hoti hain:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-[11px] text-platinum/70 pt-1">
+                  <li><strong>Section 236K:</strong> Purchaser Advance Tax (Active Taxpayer vs Inactive Filer slabs).</li>
+                  <li><strong>Section 236C:</strong> Seller Advance Capital Gains Tax based on holding period.</li>
+                  <li><strong>Stamp Duty &amp; Town Tax:</strong> Punjab Finance Act ke mutabiq District Collector (DC) assessment rate par e-Stamp generation.</li>
+                </ul>
+              </div>
+
+              <div className="rounded-xl border border-cyan/20 bg-slate-900/60 p-4 space-y-1.5 hover:border-cyan/40 transition">
+                <div className="font-mono text-xs font-bold text-cyan flex items-center gap-2">
+                  <span>04.</span> Civil Engineering Onsite Demarcation &amp; Possession Warranty
+                </div>
+                <p className="text-[11px] text-platinum/70 leading-relaxed">
+                  Khareedar ko plot ka qabza lene se pehle Total Station survey aur approved town planning coordinates ke mutabiq concrete boundary pillars ki physical demarcation di jati hai. Encroachment ya road realignment ke issues transaction se pehle identify karna lazmi hai.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-cyan/20 bg-slate-900/60 p-4 space-y-1.5 hover:border-cyan/40 transition">
+                <div className="font-mono text-xs font-bold text-cyan flex items-center gap-2">
+                  <span>05.</span> Fiduciary Escrow Settlement &amp; Executive Oversight
+                </div>
+                <p className="text-[11px] text-platinum/70 leading-relaxed">
+                  Overseas Pakistanis ke liye milestone-based escrow payments provide kiye jate hain. Token money (Biana) se lekar final transfer letter hand-over tak ka complete record CEO Taha Mubeen Bhutta (Bin Taha Associates) ke legal scrutiny protocol ke tehat verify hota hai.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-cyan/20 bg-slate-900/60 p-4 space-y-1.5 hover:border-cyan/40 transition">
+                <div className="font-mono text-xs font-bold text-cyan flex items-center gap-2">
+                  <span>06.</span> Anti-Money Laundering (AML) &amp; CFT Regulations
+                </div>
+                <p className="text-[11px] text-platinum/70 leading-relaxed">
+                  BUNYAD.PK strict KYC (Know Your Customer) rules follow karta hai. Har transaction verified banking channels (Pay Order, Demand Draft, Direct Wire) ke zariye record ki jati hai taaki State Bank of Pakistan aur FATF compliance guidelines poori hon.
+                </p>
+              </div>
+
             </div>
+
+            <div className="rounded-xl border border-cyan/30 bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-900 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-cyan font-bold">
+                  Legal Directorate &bull; Bin Taha Associates
+                </div>
+                <div className="text-xs text-platinum/70 mt-0.5">
+                  Corporate Advisory: Commercial Broadway, LDA Avenue 1, Lahore
+                </div>
+              </div>
+              <a
+                href="https://wa.me/923219404812"
+                target="_blank"
+                rel="noreferrer"
+                className="btn-cyan flex items-center gap-2 px-4 py-2 font-mono text-xs font-bold shadow-cyan-glow whitespace-nowrap cursor-pointer rounded-lg"
+              >
+                <span>Legal Desk Inquiry &rarr;</span>
+              </a>
+            </div>
+
           </div>
         )}
 
