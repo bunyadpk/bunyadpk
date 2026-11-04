@@ -343,4 +343,47 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Image URL (Optional)</label>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={formData.img}
+                      onChange={(e) => setFormData({ ...formData, img: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-mono text-[10px] uppercase text-cyan/70">Description / Specifications</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Road width, facing park, ready for construction, etc..."
+                    value={formData.desc}
+                    onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-cyan mt-2 w-full py-2.5 text-xs font-bold cursor-pointer flex items-center justify-center gap-2 shadow-cyan-glow"
+                >
+                  <Send className="h-4 w-4" />
+                  {submitting ? 'Inserting into Supabase...' : 'Publish Listing to BUNYAD'}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
