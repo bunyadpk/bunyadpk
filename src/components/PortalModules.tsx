@@ -1,8 +1,132 @@
-{/* ----------------- INSTITUTIONAL WHITEPAPER & SOVEREIGN PROPTECH DOSSIER ----------------- */}
+import { useState, useMemo } from 'react';
+import { 
+  Building2, PlusCircle, FileText, CheckCircle2, 
+  Send, X, Award, ShieldCheck, MapPin, 
+  Compass
+} from 'lucide-react';
+import { CEO_PHONE, CEO_NAME } from '@/lib/constants';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+
+interface PortalModulesProps {
+  activeModule: 'about' | 'terms' | 'add-property' | null;
+  onClose: () => void;
+}
+
+const PAKISTAN_SOCIETIES = [
+  'LDA Avenue 1',
+  'Etihad Town',
+  'Jubilee Town',
+  'DHA Phase 1',
+  'DHA Phase 2',
+  'DHA Phase 3',
+  'DHA Phase 4',
+  'DHA Phase 5',
+  'DHA Phase 6',
+  'DHA Phase 7',
+  'DHA Phase 8',
+  'DHA Phase 9 Prism',
+  'DHA Rahbar Phase 11',
+  'Bahria Town Lahore',
+  'Bahria Orchard',
+  'Izmir Town',
+  'Lake City',
+  'Valencia Town',
+  'WAPDA Town',
+  'Johar Town',
+  'Model Town',
+  'Gulberg',
+  'Park View City',
+  'Al-Kabir Town',
+  'Kings Town',
+  'Central Park Housing Scheme',
+  'LDA City',
+  'DHA Islamabad',
+  'Bahria Town Islamabad',
+  'Bahria Town Karachi'
+];
+
+export default function PortalModules({ activeModule, onClose }: PortalModulesProps) {
+  const [formData, setFormData] = useState({
+    title: '',
+    type: 'Plot',
+    society: '',
+    price: '',
+    phone: CEO_PHONE,
+    desc: '',
+    img: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [showSocietySuggestions, setShowSocietySuggestions] = useState(false);
+
+  const filteredSocieties = useMemo(() => {
+    if (!formData.society.trim()) return [];
+    return PAKISTAN_SOCIETIES.filter((s) =>
+      s.toLowerCase().includes(formData.society.toLowerCase())
+    );
+  }, [formData.society]);
+
+  if (!activeModule) return null;
+
+  async function handleAddProperty(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formData.title || !formData.price || !formData.society) {
+      alert('Kripya Title, Society aur Price enter karein.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const payload = {
+          Title: formData.title,
+          Type: formData.type,
+          Society: formData.society,
+          Price: formData.price.startsWith('PKR') ? formData.price : `PKR ${formData.price}`,
+          Phone: formData.phone || CEO_PHONE,
+          Description: formData.desc || 'Direct verified listing on BUNYAD.PK Portal.',
+          Image: formData.img || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'
+        };
+
+        const { error } = await supabase.from('properties').insert([payload]);
+
+        if (error) {
+          console.error('Supabase Insert Error:', error);
+          alert(`Error saving listing: ${error.message}`);
+          return;
+        }
+      }
+
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        onClose();
+        window.location.reload();
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      alert('Property submit ho gayi. Page reload ho raha hai.');
+      onClose();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/85 backdrop-blur-md p-4 overflow-y-auto">
+      <div className={`glass-strong w-full ${activeModule === 'about' ? 'max-w-4xl' : 'max-w-2xl'} rounded-3xl border border-cyan/40 p-6 sm:p-8 shadow-2xl relative my-8 text-platinum max-h-[90vh] overflow-y-auto`}>
+        
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1.5 rounded-xl border border-cyan/20 text-platinum/60 hover:text-cyan hover:border-cyan transition cursor-pointer"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* ----------------- INSTITUTIONAL ABOUT SECTION ----------------- */}
         {activeModule === 'about' && (
           <div className="space-y-8 pr-1">
-            
-            {/* Dossier Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-cyan/20 pb-6">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan/40 bg-cyan/10 text-cyan shadow-cyan-glow">
@@ -25,46 +149,33 @@
                   </p>
                 </div>
               </div>
-              <div className="text-right hidden sm:block font-mono text-[11px] text-platinum/50 border-l border-slate-800 pl-4">
-                <div>AUTHORITY: CEO DIRECT</div>
-                <div className="text-cyan font-bold">BIN TAHA ASSOCIATES</div>
-                <div>LAHORE, PAKISTAN</div>
-              </div>
             </div>
 
-            {/* Section I: Executive Problem Statement & Macro Vision */}
             <section className="space-y-3">
               <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-cyan">
                 <span>01.</span>
-                <span>Macro Strategic Vision &amp; The Systemic Real Estate Deficit</span>
+                <span>Macro Strategic Vision &amp; Systemic Transparency</span>
               </div>
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 text-xs sm:text-sm leading-relaxed text-slate-300 space-y-3">
                 <p>
-                  Pakistan ke traditional real estate infrastructure mein structural asymmetry, fraudulent land-titling, speculative manipulation, aur undocumented manual revenue records (Patwar &amp; Mauza registers) ne domestic aur overseas Pakistani investors ke capital security ko severely compromise kiya hai. Private housing schemes aur public development authorities ke darmiyan spatial mapping ki standardisation na hone ki wajah se border disputes, boundary overlapping, multiple balloting frauds, aur legal title ambiguities peda hoti hain.
-                </p>
-                <p>
-                  <strong className="text-white">BUNYAD.PK</strong> is systemic fragility ko solve karne ke liye establish kiya gaya institutional digital framework hai. Iska mission sovereign-grade transparency establish karna hai jahan statutory town planning, digital geospatial radar, total-station field demarcations, revenue record auditing, aur mathematical tax-valuation matrices ek centralized computational platform par synchronize hote hain.
+                  BUNYAD.PK is built to address systemic asymmetries in Pakistan real estate. By digitizing manual revenue registers, layout schemes, and boundary verifications, our mandate is to guarantee absolute investment integrity for both local buyers and overseas Pakistani investors.
                 </p>
               </div>
             </section>
 
-            {/* Section II: Technical Spatial Engine & GIS Architecture */}
             <section className="space-y-3">
               <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-cyan">
                 <span>02.</span>
-                <span>Spatial Intelligence, Coordinate Rasterization &amp; GIS Engine</span>
+                <span>Geospatial Intelligence &amp; Master Radar System</span>
               </div>
               <div className="rounded-2xl border border-cyan/20 bg-slate-900/40 p-5 space-y-4">
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-300">
-                  BUNYAD.PK standard web interfaces ki tarah static image embedding use nahi karta. Humara spatial radar engine high-precision coordinate transformation CRS (Coordinate Reference System) aur sub-meter raster tile mapping par run karta hai:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="rounded-xl border border-slate-800 bg-obsidian/70 p-4 space-y-1.5">
                     <div className="flex items-center gap-2 font-mono text-xs font-bold text-cyan">
                       <MapPin className="h-4 w-4" /> Vector Master Laying
                     </div>
                     <p className="text-[11px] text-platinum/70 leading-normal">
-                      LDA Avenue 1 (Block A to Block M) aur 38 major Lahore societies ke approved regulatory master layouts ko geo-referenced vector planes par reconstruct kiya gaya hai.
+                      High-resolution vector maps for LDA Avenue 1 (Blocks A to M) and 38 prime Lahore societies.
                     </p>
                   </div>
                   <div className="rounded-xl border border-slate-800 bg-obsidian/70 p-4 space-y-1.5">
@@ -72,155 +183,246 @@
                       <Compass className="h-4 w-4" /> Coordinate Accuracy
                     </div>
                     <p className="text-[11px] text-platinum/70 leading-normal">
-                      Exact easting/northing datum points par individual plot parcel bounding-boxes assign kiye jate hain jisse road widening, green belts, aur commercial corners transparent rehte hain.
+                      Sub-meter coordinate referencing for accurate boundary lines and plot allocation.
                     </p>
                   </div>
                   <div className="rounded-xl border border-slate-800 bg-obsidian/70 p-4 space-y-1.5">
                     <div className="flex items-center gap-2 font-mono text-xs font-bold text-cyan">
-                      <ShieldCheck className="h-4 w-4" /> Disputed Zone Flagging
+                      <ShieldCheck className="h-4 w-4" /> Risk Assessment
                     </div>
                     <p className="text-[11px] text-platinum/70 leading-normal">
-                      Non-possession pockets, stay-order litigations, aur unacquired agricultural lands ko spatial engine par highlight kiya jata hai taake investor risk zero ho.
+                      Clear demarcation between clear possession sectors and disputed zones.
                     </p>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Section III: Statutory Legal Auditing & Document Clearance */}
             <section className="space-y-3">
               <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-cyan">
                 <span>03.</span>
-                <span>Statutory Authority Due Diligence &amp; Legal Audit Framework</span>
+                <span>Statutory Compliance &amp; Title Verification</span>
               </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-300">
-                  Transaction execution se pehle statutory clearances ka rigorous legal screening protocol follow kiya jata hai jo authority-level documentation verification standard establish karta hai:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div className="rounded-xl border border-slate-800/80 bg-obsidian/50 p-4 space-y-1">
-                    <div className="font-mono text-xs font-bold text-white flex items-center gap-2">
-                      <FileText className="h-3.5 w-3.5 text-cyan" /> 1. Verification of Title &amp; Intiqal
-                    </div>
-                    <p className="text-[11px] text-platinum/70">
-                      Sub-registrar records, mutation registers (Fard Malkiat, Aks Shajra), aur development authority records (LDA/CDA/RDA/DHA) ke cross-referenced allotment orders ka physical audit.
-                    </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="rounded-xl border border-slate-800/80 bg-obsidian/50 p-4 space-y-1">
+                  <div className="font-mono text-xs font-bold text-white flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-cyan" /> Title &amp; Registry Verification
                   </div>
-                  <div className="rounded-xl border border-slate-800/80 bg-obsidian/50 p-4 space-y-1">
-                    <div className="font-mono text-xs font-bold text-white flex items-center gap-2">
-                      <Award className="h-3.5 w-3.5 text-emerald-400" /> 2. No Objection Certification (NDC)
-                    </div>
-                    <p className="text-[11px] text-platinum/70">
-                      Sui Northern Gas Pipelines, LESCO/WAPDA, LDA Water &amp; Sanitation Agency (WASA), aur society development charges ke complete clear dues certificates ki verification.
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-800/80 bg-obsidian/50 p-4 space-y-1">
-                    <div className="font-mono text-xs font-bold text-white flex items-center gap-2">
-                      <ShieldCheck className="h-3.5 w-3.5 text-cyan" /> 3. Litigation &amp; Encumbrance Screening
-                    </div>
-                    <p className="text-[11px] text-platinum/70">
-                      Revenue Courts, Civil Courts, aur High Court registries mein property ke mutaliq kisi bhi active stay order, lis pendens, bank mortgages ya family dispute claims ki legal clearance.
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-800/80 bg-obsidian/50 p-4 space-y-1">
-                    <div className="font-mono text-xs font-bold text-white flex items-center gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> 4. Physical Possession &amp; Demarcation Sanction
-                    </div>
-                    <p className="text-[11px] text-platinum/70">
-                      Town planning department se verified possession letter aur physical site handover protocols ke tehat actual layout map se paper boundaries ko reconcile karna.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Section IV: Civil Infrastructure, Survey Instruments & On-Site Verification */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-cyan">
-                <span>04.</span>
-                <span>Civil Engineering Demarcation &amp; Field Survey Methodology</span>
-              </div>
-              <div className="rounded-2xl border border-cyan/20 bg-slate-900/40 p-5 space-y-3">
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-300">
-                  Paper agreements actual ground realities se match nahi karti jab tak unki onsite technical audit na ki jaye. BUNYAD.PK field surveys ko civil engineering precision par conduct karta hai:
-                </p>
-                <div className="space-y-2.5 text-xs text-slate-300 leading-relaxed font-sans">
-                  <div className="p-3 rounded-lg bg-obsidian/60 border border-slate-800 flex items-start gap-3">
-                    <span className="font-mono text-cyan font-bold text-xs mt-0.5">• Total Station Geodetic Measurement:</span>
-                    <span className="text-platinum/80 text-[11px]">Electronic distance measurement (EDM) aur theodolite prisms ke zariye millimeter-accurate boundary offsets aur angle coordinates calculate kiye jate hain.</span>
-                  </div>
-                  <div className="p-3 rounded-lg bg-obsidian/60 border border-slate-800 flex items-start gap-3">
-                    <span className="font-mono text-cyan font-bold text-xs mt-0.5">• Benchmark Pillar Establishment:</span>
-                    <span className="text-platinum/80 text-[11px]">Approved master layout ke reference permanent benchmark (BM) pillars se triangulate karke actual plot corners par physical concrete markers install karna.</span>
-                  </div>
-                  <div className="p-3 rounded-lg bg-obsidian/60 border border-slate-800 flex items-start gap-3">
-                    <span className="font-mono text-cyan font-bold text-xs mt-0.5">• Road Width &amp; Right-of-Way (ROW) Audit:</span>
-                    <span className="text-platinum/80 text-[11px]">Avenue 1 aur allied societies mein front roads (40', 60', 80', 150' Boulevards) ki physical measurement taake kisi bhi private encroachment ko pre-construction identify kiya ja sake.</span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Section V: Fiduciary Taxation, Construction Economics & Escrow */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-cyan">
-                <span>05.</span>
-                <span>Fiscal Architecture, Construction Materials Index &amp; Escrow</span>
-              </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4 text-xs sm:text-sm leading-relaxed text-slate-300">
-                <p>
-                  BUNYAD.PK investor capital ko macroeconomic volatility se protect karne ke liye fiscal analytics provide karta hai:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl border border-slate-800 bg-obsidian/80 space-y-2">
-                    <div className="font-mono text-xs font-bold text-cyan">Statutory Tax &amp; Valuation Calculator</div>
-                    <p className="text-[11px] text-platinum/70 leading-relaxed">
-                      FBR Section 236K (Purchaser Advance Tax), Section 236C (Seller Capital Gain Tax), Stamp Duty (Punjab Finance Act), Town Tax, aur DC Valuation tables ka automated real-time calculation engine.
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl border border-slate-800 bg-obsidian/80 space-y-2">
-                    <div className="font-mono text-xs font-bold text-emerald-400">Live Civil Material Rate Stream</div>
-                    <p className="text-[11px] text-platinum/70 leading-relaxed">
-                      Deformed steel bars (Grade 60), Portland cement (Falcon, Maple Leaf, Bestway), first-class red clay bricks (Awwal), aur Sargodha crush ke verified wholesale rates jo construction cost projection ko accurate banate hain.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Section VI: Executive Governance & Fiduciary Mandate */}
-            <div className="rounded-2xl border border-cyan/40 bg-gradient-to-br from-cyan-950/60 via-slate-900 to-slate-950 p-6 sm:p-7 shadow-2xl relative overflow-hidden">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div className="space-y-2 max-w-2xl">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-cyan font-bold bg-cyan/10 border border-cyan/30 px-3 py-1 rounded-md">
-                    Fiduciary Authority &amp; Corporate Governance
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-black text-white">
-                    Supervised by CEO Taha Mubeen Bhutta
-                  </h3>
-                  <div className="font-mono text-xs text-cyan">
-                    Bin Taha Associates &bull; Corporate Real Estate Advisory &bull; Lahore
-                  </div>
-                  <p className="text-xs text-platinum/70 leading-relaxed pt-1">
-                    Bin Taha Associates ke tehat BUNYAD.PK ka direct mandate har investor ko uncompromised institutional security provide karna hai. Har file transaction, onsite boundary demarcation, aur escrow release CEO office ke direct supervision aur legal protocol audit ke baad execute kiye jate hain.
+                  <p className="text-[11px] text-platinum/70">
+                    Comprehensive cross-checking with LDA, DHA, and revenue authorities.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2.5 w-full md:w-auto shrink-0">
-                  <a
-                    href="https://wa.me/923219404812"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-cyan flex items-center justify-center gap-2 px-6 py-3 font-mono text-xs font-bold shadow-cyan-glow whitespace-nowrap cursor-pointer rounded-xl"
-                  >
-                    <span>Direct Executive Desk</span>
-                    <span>&rarr;</span>
-                  </a>
-                  <div className="text-center font-mono text-[10px] text-platinum/50">
-                    Official Tel: +92 321 9404812
+                <div className="rounded-xl border border-slate-800/80 bg-obsidian/50 p-4 space-y-1">
+                  <div className="font-mono text-xs font-bold text-white flex items-center gap-2">
+                    <Award className="h-3.5 w-3.5 text-emerald-400" /> NDC &amp; Encumbrance Audit
                   </div>
+                  <p className="text-[11px] text-platinum/70">
+                    Strict verification of No Objection Certificates and active litigation checks.
+                  </p>
                 </div>
+              </div>
+            </section>
+
+            <div className="rounded-2xl border border-cyan/40 bg-gradient-to-br from-cyan-950/60 via-slate-900 to-slate-950 p-6 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="space-y-1">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-cyan font-bold">
+                  Corporate Leadership
+                </div>
+                <h3 className="text-lg font-black text-white">
+                  CEO {CEO_NAME} &bull; Bin Taha Associates
+                </h3>
+                <p className="text-xs text-platinum/70">
+                  Commercial Broadway, LDA Avenue 1, Raiwind Road, Lahore
+                </p>
+              </div>
+              <a
+                href="https://wa.me/923219404812"
+                target="_blank"
+                rel="noreferrer"
+                className="btn-cyan flex items-center justify-center gap-2 px-6 py-2.5 font-mono text-xs font-bold shadow-cyan-glow whitespace-nowrap cursor-pointer rounded-xl"
+              >
+                <span>Direct Executive Desk &rarr;</span>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- TERMS SECTION ----------------- */}
+        {activeModule === 'terms' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
+              <div className="p-2.5 rounded-xl bg-cyan/10 border border-cyan/30 text-cyan">
+                <FileText className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="chip border-cyan/40 bg-cyan/10 text-cyan font-mono text-[10px]">
+                  LEGAL COMPLIANCE 2026
+                </span>
+                <h3 className="font-display text-lg font-bold text-platinum mt-0.5">
+                  Terms &amp; Conditions | BUNYAD.PK
+                </h3>
+              </div>
+            </div>
+            <div className="space-y-3 text-xs text-platinum/80 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+              <div className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3">
+                <h4 className="font-mono text-xs font-bold text-cyan mb-1">1. Pakistan Property Legal NDC</h4>
+                <p>Har property ka ownership record relevant authority (LDA, CDA, DHA) se physically cross-verify hota hai.</p>
+              </div>
+              <div className="rounded-xl border border-cyan/15 bg-obsidian/60 p-3">
+                <h4 className="font-mono text-xs font-bold text-cyan mb-1">2. Direct CEO Oversight</h4>
+                <p>Tamam legal transfers aur escrow settlements CEO Taha Mubeen Bhutta ke direct supervision mein execute hoti hain.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- ADD PROPERTY SECTION ----------------- */}
+        {activeModule === 'add-property' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
+              <div className="p-2.5 rounded-xl bg-cyan/10 border border-cyan/30 text-cyan">
+                <PlusCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
+                  LIVE SUPABASE CLOUD INGESTION
+                </span>
+                <h3 className="font-display text-lg font-bold text-platinum mt-0.5">
+                  Post New Property Listing | BUNYAD.PK
+                </h3>
               </div>
             </div>
 
+            {submitted ? (
+              <div className="py-8 text-center space-y-2">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-400 animate-bounce" />
+                <h4 className="font-display text-base font-bold text-platinum">Listing Successfully Added!</h4>
+                <p className="text-xs text-platinum/70">
+                  Data Supabase database mein save ho chuka hai aur screen par sync ho gaya hai.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleAddProperty} className="space-y-3 text-xs">
+                <div>
+                  <label className="font-mono text-[10px] uppercase text-cyan/70">Property Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 5 Marla Hot Location Plot - Phase 1"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Type *</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none"
+                    >
+                      <option value="Plot">Plot</option>
+                      <option value="House">House</option>
+                      <option value="Commercial">Commercial</option>
+                    </select>
+                  </div>
+
+                  <div className="relative">
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Society (Type to Search) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Etihad Town, DHA..."
+                      value={formData.society}
+                      onFocus={() => setShowSocietySuggestions(true)}
+                      onChange={(e) => {
+                        setFormData({ ...formData, society: e.target.value });
+                        setShowSocietySuggestions(true);
+                      }}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+
+                    {showSocietySuggestions && filteredSocieties.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-cyan/40 bg-obsidian p-1 shadow-2xl">
+                        {filteredSocieties.map((soc) => (
+                          <button
+                            key={soc}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, society: soc });
+                              setShowSocietySuggestions(false);
+                            }}
+                            className="w-full text-left rounded px-2.5 py-1.5 text-xs text-platinum hover:bg-cyan/20 hover:text-cyan transition cursor-pointer"
+                          >
+                            {soc}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Demand Price (PKR) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 1.15 Crore"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Contact Number</label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Image URL (Optional)</label>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={formData.img}
+                      onChange={(e) => setFormData({ ...formData, img: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-mono text-[10px] uppercase text-cyan/70">Description / Specifications</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Road width, facing park, ready for construction, etc..."
+                    value={formData.desc}
+                    onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+                    className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-cyan mt-2 w-full py-2.5 text-xs font-bold cursor-pointer flex items-center justify-center gap-2 shadow-cyan-glow"
+                >
+                  <Send className="h-4 w-4" />
+                  {submitting ? 'Inserting into Supabase...' : 'Publish Listing to BUNYAD'}
+                </button>
+              </form>
+            )}
           </div>
         )}
+
+      </div>
+    </div>
+  );
+}
