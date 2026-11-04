@@ -126,7 +126,6 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
 
         {activeModule === 'about' && (
           <div className="space-y-6">
-            
             <div className="flex items-start gap-4 border-b border-cyan/20 pb-5">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan/40 bg-cyan/10 text-cyan shadow-cyan-glow">
                 <Building2 className="h-6 w-6" />
@@ -149,7 +148,6 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              
               <div className="rounded-xl border border-cyan/20 bg-slate-900/50 p-4 space-y-1.5 hover:border-cyan/50 transition">
                 <div className="flex items-center gap-2 font-mono text-xs font-bold text-cyan">
                   <MapPin className="h-4 w-4" /> High-Precision Master GIS Radar
@@ -185,7 +183,6 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                   Secure transaction protocols for overseas clients, integrated with live civil construction material indexes (Cement, Steel, Bricks) and official DC/FBR valuation matrices.
                 </p>
               </div>
-
             </div>
 
             <div className="rounded-2xl border border-cyan/30 bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-900 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -210,7 +207,6 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
                 <span>&rarr;</span>
               </a>
             </div>
-
           </div>
         )}
 
@@ -282,4 +278,69 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="font-mono text-[10px] uppercase text-cyan/70">Type *</label
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Type *</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none"
+                    >
+                      <option value="Plot">Plot</option>
+                      <option value="House">House</option>
+                      <option value="Commercial">Commercial</option>
+                    </select>
+                  </div>
+
+                  <div className="relative">
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Society (Type to Search) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Etihad Town, DHA..."
+                      value={formData.society}
+                      onFocus={() => setShowSocietySuggestions(true)}
+                      onChange={(e) => {
+                        setFormData({ ...formData, society: e.target.value });
+                        setShowSocietySuggestions(true);
+                      }}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+
+                    {showSocietySuggestions && filteredSocieties.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-lg border border-cyan/40 bg-obsidian p-1 shadow-2xl">
+                        {filteredSocieties.map((soc) => (
+                          <button
+                            key={soc}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, society: soc });
+                              setShowSocietySuggestions(false);
+                            }}
+                            className="w-full text-left rounded px-2.5 py-1.5 text-xs text-platinum hover:bg-cyan/20 hover:text-cyan transition cursor-pointer"
+                          >
+                            {soc}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Demand Price (PKR) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 1.15 Crore"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      className="mt-1 w-full rounded-lg border border-cyan/20 bg-obsidian/80 px-3 py-2 text-xs text-platinum outline-none focus:border-cyan"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-mono text-[10px] uppercase text-cyan/70">Contact Number</label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(
