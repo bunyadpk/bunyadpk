@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { 
   Building2, PlusCircle, FileText, CheckCircle2, 
-  Send, X, Award, UserCheck
+  Send, X, Award, UserCheck, ShieldCheck, MapPin, 
+  Compass, Layers, Briefcase, Phone
 } from 'lucide-react';
 import { CEO_PHONE, CEO_NAME } from '@/lib/constants';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -77,7 +78,6 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
     setSubmitting(true);
     try {
       if (isSupabaseConfigured && supabase) {
-        // Exact column names matching Supabase: Title, Type, Society, Price, Phone, Description, Image
         const payload = {
           Title: formData.title,
           Type: formData.type,
@@ -114,57 +114,116 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/85 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="glass-strong w-full max-w-2xl rounded-2xl border border-cyan/40 p-6 shadow-2xl relative my-8 text-platinum">
+      <div className={`glass-strong w-full ${activeModule === 'about' ? 'max-w-4xl' : 'max-w-2xl'} rounded-3xl border border-cyan/40 p-6 sm:p-8 shadow-2xl relative my-8 text-platinum max-h-[90vh] overflow-y-auto`}>
         
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg border border-cyan/20 text-platinum/60 hover:text-cyan hover:border-cyan transition cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 rounded-xl border border-cyan/20 text-platinum/60 hover:text-cyan hover:border-cyan transition cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
 
+        {/* ----------------- UPGRADED EXECUTIVE ABOUT MODAL ----------------- */}
         {activeModule === 'about' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
-              <div className="p-2.5 rounded-xl bg-cyan/10 border border-cyan/30 text-cyan">
-                <Building2 className="h-6 w-6" />
+          <div className="space-y-6">
+            
+            {/* Header Badge & Title */}
+            <div className="flex items-start gap-4 border-b border-cyan/20 pb-5">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan/40 bg-cyan/10 text-cyan shadow-cyan-glow">
+                <Building2 className="h-7 w-7" />
               </div>
               <div>
-                <span className="chip border-emerald-400/50 text-emerald-400 font-mono text-[10px]">
-                  ALL PAKISTAN PROPTECH &amp; CIVIL SUITE
+                <span className="inline-block rounded-full border border-cyan/30 bg-cyan/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-cyan">
+                  Pakistan Premier PropTech &amp; Civil Engineering Suite
                 </span>
-                <h3 className="font-display text-lg font-bold text-platinum mt-0.5">
-                  About BUNYAD.PK (بنیاد) Pakistan
-                </h3>
+                <h2 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                  About BUNYAD.PK <span className="font-serif font-normal text-cyan">(بنیاد)</span>
+                </h2>
+                <p className="mt-1 font-mono text-xs text-platinum/60">
+                  Supervised by CEO {CEO_NAME} &bull; Bin Taha Associates &bull; Tel: {CEO_PHONE}
+                </p>
               </div>
             </div>
-            <div className="space-y-3 text-xs leading-relaxed text-platinum/80">
-              <p>
-                <strong>BUNYAD.PK</strong> Pakistan ka premier PropTech portal hai, jise <strong>CEO {CEO_NAME}</strong> supervise karte hain. Lahore ke 38 housing societies aur nationwide verified listings ka authenticated platform.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="rounded-xl border border-cyan/15 bg-obsidian/70 p-3.5 space-y-1">
-                  <div className="flex items-center gap-2 text-cyan font-bold font-mono">
-                    <Award className="h-4 w-4" /> Nationwide Verification
-                  </div>
-                  <p className="text-[11px] text-platinum/70">
-                    LDA, CDA, RDA aur DHA authority certified documentation review.
-                  </p>
+
+            {/* Corporate Vision & Mission */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-sm leading-relaxed text-slate-300">
+              <strong className="text-white font-semibold">BUNYAD.PK</strong> پاکستان کا سب سے جدید اور جامع ڈیجیٹل لینڈ ویریفکیشن، لائیو جی آئی ایس (GIS) ماسٹر ریڈار اور سول انجینئرنگ پراپ ٹیک ایکو سسٹم ہے۔ اس پورٹل کی بنیاد روایتی رئیل اسٹیٹ کے ابہام، پٹوار کلچر کی بے ضابطگیوں اور غیر تصدیق شدہ خرید و فروخت کے خطرات کے تدارک کے لیے رکھی گئی ہے۔ اوورسیز پاکستانیوں اور ملکی سرمایہ کاروں کو 100 فیصد مصدقہ، شفاف اور محفوظ ترین ٹرانزیکشن کا ماحول فراہم کرنا ہمارا بنیادی مشن ہے۔
+            </div>
+
+            {/* 4 Strategic Pillars */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              
+              <div className="rounded-2xl border border-cyan/20 bg-slate-900/50 p-5 transition hover:border-cyan/50">
+                <div className="mb-2 flex items-center gap-2 font-mono text-sm font-bold text-cyan">
+                  <MapPin className="h-4 w-4 text-cyan" />
+                  <span>High-Precision Master GIS Radar</span>
                 </div>
-                <div className="rounded-xl border border-cyan/15 bg-obsidian/70 p-3.5 space-y-1">
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold font-mono">
-                    <UserCheck className="h-4 w-4" /> 100% Escrow Protection
-                  </div>
-                  <p className="text-[11px] text-platinum/70">
-                    Milestone-based secure investment ecosystem.
-                  </p>
+                <p className="text-xs leading-relaxed text-platinum/70">
+                  ایل ڈی اے ایونیو 1 کے بلاک A تا M اور لاہور کی 38 پریمیم ہاؤسنگ اسکیموں کے آفیشل ٹاؤن پلاننگ ماسٹر میپس۔ لائیو پکسل ریڈار کے ذریعے ہر پلاٹ کا درست محل وقوع، سڑک کی چوڑائی اور فکسڈ کوآرڈینیٹس چند سیکنڈ میں جانچیں۔
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-cyan/20 bg-slate-900/50 p-5 transition hover:border-cyan/50">
+                <div className="mb-2 flex items-center gap-2 font-mono text-sm font-bold text-cyan">
+                  <Award className="h-4 w-4 text-emerald-400" />
+                  <span>Authority Document Clearance</span>
+                </div>
+                <p className="text-xs leading-relaxed text-platinum/70">
+                  LDA، CDA، RDA اور DHA اتھارٹیز کے منظور شدہ قانونی فریم ورک کے تحت ہر فائل، الاٹمنٹ، پوزیشن اسٹیٹس، بیلٹنگ ریکارڈز اور ٹرانسفر پروٹوکولز کی تکنیکی چھان بین تاکہ آپ کی جمع پونجی محفوظ رہے۔
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-cyan/20 bg-slate-900/50 p-5 transition hover:border-cyan/50">
+                <div className="mb-2 flex items-center gap-2 font-mono text-sm font-bold text-cyan">
+                  <Compass className="h-4 w-4 text-cyan" />
+                  <span>Onsite Civil Demarcation &amp; Survey</span>
+                </div>
+                <p className="text-xs leading-relaxed text-platinum/70">
+                  صرف کاغذی معلومات نہیں، بلکہ سائٹ پر جا کر ٹوٹل اسٹیشن مشینری، جی پی ایس اور لینڈ سروے کے ذریعے پلاٹ کی حد بندی، پلر مارکنگ اور گراؤنڈ پوزیشن کی مصدقہ تصدیق۔
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-cyan/20 bg-slate-900/50 p-5 transition hover:border-cyan/50">
+                <div className="mb-2 flex items-center gap-2 font-mono text-sm font-bold text-cyan">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  <span>100% Secure Investment Ecosystem</span>
+                </div>
+                <p className="text-xs leading-relaxed text-platinum/70">
+                  اوورسیز پاکستانیوں کے لیے فراڈ سے پاک ڈیجیٹل ڈیلز۔ لائیو کنسٹرکشن مٹیریل ریٹس (سیمنٹ، سریا، اینٹ)، ڈی سی و ایف بی آر ویلیوایشن، اور قانونی رہنمائی ایک ہی باوقار پلیٹ فارم پر۔
+                </p>
+              </div>
+
+            </div>
+
+            {/* CEO Direct Contact & Governance */}
+            <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-cyan/30 bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-900 p-5 sm:flex-row sm:items-center">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-cyan">
+                  Executive Governance &amp; Land Advisory
+                </div>
+                <div className="text-base font-bold text-white">
+                  CEO {CEO_NAME} &bull; Bin Taha Associates
+                </div>
+                <div className="text-xs text-platinum/60">
+                  Commercial Broadway, LDA Avenue 1, Raiwind Road, Lahore
                 </div>
               </div>
+              <a
+                href={`https://wa.me/923219404812?text=${encodeURIComponent("Assalam-o-Alaikum CEO Taha Mubeen Bhutta, I am inquiring through BUNYAD.PK portal regarding property verification.")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-cyan flex items-center gap-2 px-5 py-2.5 font-mono text-xs font-bold shadow-cyan-glow"
+              >
+                <span>WhatsApp CEO Direct</span>
+                <span>→</span>
+              </a>
             </div>
+
           </div>
         )}
 
+        {/* ----------------- TERMS MODAL ----------------- */}
         {activeModule === 'terms' && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
@@ -193,6 +252,7 @@ export default function PortalModules({ activeModule, onClose }: PortalModulesPr
           </div>
         )}
 
+        {/* ----------------- ADD PROPERTY MODAL ----------------- */}
         {activeModule === 'add-property' && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 border-b border-cyan/15 pb-3">
